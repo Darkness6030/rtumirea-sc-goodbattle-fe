@@ -1,0 +1,149 @@
+import { CheckCircle, Loader2, Play, XCircle } from 'lucide-react'
+
+import type { Participant } from '@/lib/battle-mock'
+
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Typography,
+} from '@/components/ui'
+import { LANGUAGE_LABELS } from '@/lib/battle-mock'
+import { cn } from '@/lib/utils'
+
+import { useBattle } from './battle-context'
+import { CodeEditor } from './code-editor'
+
+function ParticipantEditor({
+  isCurrentUser = false,
+  participant,
+  readOnly,
+}: {
+  isCurrentUser?: boolean
+  participant: Participant
+  readOnly: boolean
+}) {
+  const {
+    availableLanguages,
+    isRunningCode,
+    onCodeChange,
+    onLanguageChange,
+    onRunCode,
+    testResults,
+  } = useBattle()
+
+  return (
+    <Card
+      className={cn(
+        'flex h-full flex-col overflow-hidden',
+        isCurrentUser && 'border-primary',
+      )}
+    >
+      <div className="flex shrink-0 flex-row items-center gap-2 px-4 py-2">
+        <Typography className="shrink-0 font-medium" variant="small">
+          {participant.name}
+        </Typography>
+        {isCurrentUser && (
+          <Typography
+            className="shrink-0 text-muted-foreground"
+            variant="small"
+          >
+            (вы)
+          </Typography>
+        )}
+        <div className="flex-1" />
+        {isCurrentUser ? (
+          <>
+            <Select
+              onValueChange={onLanguageChange}
+              value={participant.language}
+            >
+              <SelectTrigger className="h-7 w-auto gap-1 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableLanguages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {LANGUAGE_LABELS[lang] ?? lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              disabled={isRunningCode}
+              onClick={onRunCode}
+              size="sm"
+              variant="outline"
+            >
+              {isRunningCode ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Play className="size-3.5" />
+              )}
+              {isRunningCode ? 'Выполняется...' : 'Запустить'}
+            </Button>
+          </>
+        ) : (
+          <Badge variant="secondary">
+            {LANGUAGE_LABELS[participant.language] ?? participant.language}
+          </Badge>
+        )}
+      </div>
+
+      <CardContent className="min-h-0 flex-1 overflow-auto p-0">
+        <CodeEditor
+          code={participant.code}
+          language={participant.language}
+          onChange={
+            isCurrentUser
+              ? (code) => onCodeChange(participant.id, code)
+              : undefined
+          }
+          readOnly={readOnly}
+        />
+      </CardContent>
+
+      {isCurrentUser && testResults && (
+        <div className="flex max-h-40 shrink-0 flex-col border-t p-2">
+          <div className="flex flex-col gap-1 overflow-y-auto font-mono text-xs">
+            {testResults.map((r, i) => (
+              <div
+                className={cn(
+                  'flex items-start gap-1.5 rounded px-2 py-1',
+                  r.passed
+                    ? 'bg-green-500/10 text-green-700 dark:text-green-400'
+                    : 'bg-red-500/10 text-red-700 dark:text-red-400',
+                )}
+                key={i}
+              >
+                {r.passed ? (
+                  <CheckCircle className="mt-0.5 size-3 shrink-0" />
+                ) : (
+                  <XCircle className="mt-0.5 size-3 shrink-0" />
+                )}
+                <div>
+                  <span className="text-muted-foreground">Тест {i + 1}:</span>{' '}
+                  {r.passed ? (
+                    'OK'
+                  ) : (
+                    <>
+                      ожидалось {r.expected}, получено {r.actual}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+export { ParticipantEditor }
