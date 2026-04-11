@@ -1,14 +1,12 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
-import { fetchAuthUser } from '@/api'
 import { Typography } from '@/components/ui'
 import Logo from '@/icons/logo.svg'
 import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/(auth)')({
-  beforeLoad: async () => {
-    const user = await fetchAuthUser()
-    useAuthStore.getState().setAuthState(user)
+  beforeLoad: () => {
+    const { user } = useAuthStore.getState()
 
     if (user) {
       throw redirect({ to: '/' })

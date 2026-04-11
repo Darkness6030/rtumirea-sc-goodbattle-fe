@@ -1,4 +1,4 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { LogOut, Swords, User } from 'lucide-react'
 import { ViewTransition } from 'react'
 
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { Button, Spinner, Typography } from './ui'
 
 function Header() {
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const isAuthResolved = useAuthStore((state) => state.isAuthResolved)
   const setAuthState = useAuthStore((state) => state.setAuthState)
@@ -18,6 +19,8 @@ function Header() {
   const logout = useLogout(() => {
     setAuthState(null)
     void queryClient.invalidateQueries()
+
+    navigate({ to: '/login' })
   })
 
   function handleLogoutClick() {

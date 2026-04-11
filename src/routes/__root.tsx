@@ -2,14 +2,21 @@ import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ViewTransition } from 'react'
 
+import { fetchAuthUser } from '@/api'
 import { Header } from '@/components/header'
-import { Button, Typography } from '@/components/ui'
+import { Button, Spinner, Typography } from '@/components/ui'
 import { Toaster } from '@/components/ui/sonner'
 import Logo from '@/icons/logo.svg'
+import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const user = await fetchAuthUser()
+    useAuthStore.getState().setAuthState(user)
+  },
   component: RootLayout,
   errorComponent: RootError,
+  pendingComponent: RootPending,
 })
 
 function RootError({ error, reset }: { error: Error; reset: () => void }) {
@@ -52,5 +59,13 @@ function RootLayout() {
 
       <Toaster />
     </>
+  )
+}
+
+function RootPending() {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center">
+      <Spinner />
+    </div>
   )
 }
