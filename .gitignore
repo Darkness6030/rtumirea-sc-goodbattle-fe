@@ -28,4 +28,3 @@ dist-ssr
 
 # Generated
 **/__generated__
-*.gen.ts
