@@ -48,37 +48,36 @@
 
 ```
 src/
-├── assets/              # Статика (SVG-логотип и т.д.)
+├── api/                 # API-клиент, React Query hooks и query options
+│   ├── __generated__/   # Автогенерация
+│   ├── hooks/
+│   ├── client.ts
+│   ├── index.ts
+│   └── query-client.ts
 ├── components/
-│   ├── header.tsx       # Общий хедер (два варианта: полный и компактный)
+│   ├── header.tsx       # Общий хедер
 │   ├── battle/          # Компоненты страницы баттла
 │   │   ├── battle-context.tsx       # React Context со стейтом баттла
 │   │   ├── battle-results-dialog.tsx # Диалог результатов
-│   │   ├── code-editor.tsx          # Обёртка CodeMirror (JS/TS/Python/C++/Java)
+│   │   ├── code-editor.tsx          # Обёртка CodeMirror
 │   │   ├── countdown-timer.tsx      # Таймер обратного отсчёта
 │   │   ├── editor-grid.tsx          # Сетка редакторов (resizable, табы участников)
 │   │   ├── organizer-controls.tsx   # Кнопки управления баттлом
 │   │   ├── participant-editor.tsx   # Карточка участника (редактор + язык + запуск)
 │   │   └── task-panel.tsx           # Панель задачи (таймер, описание, примеры)
-│   └── ui/              # shadcn-компоненты + кастомные (Typography)
+│   └── ui/              # shadcn-компоненты
 │       └── index.ts     # Barrel-экспорт UI-компонентов
+├── icons/               # SVG-иконки и логотип (vite-plugin-svg-sprite)
 ├── lib/
-│   ├── battle-mock.ts   # Моковые данные и типы баттла
-│   ├── mock.ts          # Моковые данные (языки, задачи)
 │   └── utils.ts         # Утилиты (cn — объединение classNames)
 ├── routes/              # Файловый роутинг TanStack Router
-│   ├── __root.tsx       # Корневой layout (хедер + outlet)
-│   ├── _main.tsx        # Pathless layout (лого слева + outlet справа)
-│   ├── _main/
-│   │   ├── index.tsx    # Главная страница
-│   │   ├── login.tsx    # Авторизация
-│   │   └── register.tsx # Регистрация
-│   ├── create-room.tsx  # Создание комнаты
-│   └── rooms/
-│       └── $roomId.tsx  # Страница баттла
-├── routeTree.gen.ts     # Автогенерация — не редактировать
-├── App.tsx              # Инициализация роутера
+│   ├── __root.tsx       # Корневой layout + error boundary + desktop/mobile split
+│   ├── (auth)/          # Публичная зона (/login, /register)
+│   └── (app)/           # Приватная зона (/, /create-room, /battles, /profile, /rooms/$roomId)
+├── stores/              # Zustand-сторы
+├── app.tsx              # Инициализация роутера
 ├── main.tsx             # Точка входа
+├── routeTree.gen.ts     # Автогенерация
 └── index.css            # Глобальные стили, CSS-переменные, тема
 ```
 
@@ -92,7 +91,3 @@ pnpm lint       # Линтинг
 pnpm format     # Форматирование Prettier
 pnpm preview    # Превью production-сборки
 ```
-
-## Мобильная версия
-
-Платформа доступна только на десктопе. На экранах < 1024px отображается заглушка с предупреждением (реализовано в `__root.tsx`).
