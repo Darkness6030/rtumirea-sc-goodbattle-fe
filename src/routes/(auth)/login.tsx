@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { LogIn, Mail } from 'lucide-react'
+import { useState } from 'react'
 
+import { useLogin } from '@/api'
 import {
   Button,
   Card,
@@ -10,17 +12,35 @@ import {
   CardTitle,
   Input,
   Label,
+  Spinner,
   Typography,
 } from '@/components/ui'
+import { useAuthStore } from '@/stores/auth-store'
 
-export const Route = createFileRoute('/_main/login')({
+export const Route = createFileRoute('/(auth)/login')({
   component: LoginPage,
 })
 
 function LoginPage() {
+  const navigate = useNavigate()
+  const setAuthState = useAuthStore((state) => state.setAuthState)
+  const login = useLogin((user) => {
+    setAuthState(user)
+    void navigate({ to: '/' })
+  })
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    // TODO: implement login
+
+    if (!email.trim() || !password.trim()) return
+
+    login.mutate({
+      email: email.trim(),
+      password,
+    })
   }
 
   return (
@@ -40,8 +60,11 @@ function LoginPage() {
               <Input
                 autoComplete="email"
                 id="email"
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                required
                 type="email"
+                value={email}
               />
             </div>
 
@@ -50,12 +73,21 @@ function LoginPage() {
               <Input
                 autoComplete="current-password"
                 id="password"
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Введите пароль"
+                required
                 type="password"
+                value={password}
               />
             </div>
 
-            <Button className="mt-2 w-full" size="lg" type="submit">
+            <Button
+              className="mt-2 w-full"
+              disabled={login.isPending}
+              size="lg"
+              type="submit"
+            >
+              {login.isPending && <Spinner />}
               Войти
               <Mail />
             </Button>

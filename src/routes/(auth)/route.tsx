@@ -1,13 +1,23 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
-import Logo from '@/assets/logo.svg?react'
+import { fetchAuthUser } from '@/api'
 import { Typography } from '@/components/ui'
+import Logo from '@/icons/logo.svg'
+import { useAuthStore } from '@/stores/auth-store'
 
-export const Route = createFileRoute('/_main')({
-  component: MainLayout,
+export const Route = createFileRoute('/(auth)')({
+  beforeLoad: async () => {
+    const user = await fetchAuthUser()
+    useAuthStore.getState().setAuthState(user)
+
+    if (user) {
+      throw redirect({ to: '/' })
+    }
+  },
+  component: AuthLayout,
 })
 
-function MainLayout() {
+function AuthLayout() {
   return (
     <div className="flex flex-1 items-center justify-center gap-24 px-16">
       <div className="flex flex-col items-center gap-8">

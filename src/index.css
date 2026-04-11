@@ -126,8 +126,23 @@
   }
   html {
     @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   button {
     @apply cursor-pointer;
+  }
+
+  /* Rubber */
+  @media (min-width: 768px) and (max-width: 1440px) {
+    html {
+      font-size: calc(100vw / 1440 * 16);
+    }
+  }
+
+  @media (max-width: 375px) {
+    html {
+      font-size: calc(100vw / 375 * 16);
+    }
   }
 }

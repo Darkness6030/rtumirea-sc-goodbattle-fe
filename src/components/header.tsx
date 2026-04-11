@@ -1,64 +1,98 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Swords, User } from 'lucide-react'
+import { LogOut, Swords, User } from 'lucide-react'
+import { ViewTransition } from 'react'
 
-import Logo from '@/assets/logo.svg?react'
+import { queryClient, useLogout } from '@/api'
+import Logo from '@/icons/logo.svg'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
 
-import { Button, Typography } from './ui'
-
-const IS_AUTHENTICATED = true
-const USER_NAME = 'Алексей'
+import { Button, Spinner, Typography } from './ui'
 
 function Header() {
   const { pathname } = useLocation()
-  const compact = pathname.startsWith('/rooms/')
+  const isAuthResolved = useAuthStore((state) => state.isAuthResolved)
+  const setAuthState = useAuthStore((state) => state.setAuthState)
+  const user = useAuthStore((state) => state.user)
 
-  if (compact) {
-    return (
-      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center justify-between bg-background px-4 pt-2">
-        <Link className="flex items-center gap-3 select-none" to="/">
-          <Logo className="size-6" />
-          <Typography as="span" className="text-md" variant="body">
-            good battle
-          </Typography>
-        </Link>
-        {IS_AUTHENTICATED && (
-          <div className="flex items-center gap-1">
-            <Button asChild size="sm" variant="ghost">
-              <Link to="/profile">
-                <User className="size-3.5" />
-                {USER_NAME}
-              </Link>
-            </Button>
-          </div>
-        )}
-      </header>
-    )
+  const logout = useLogout(() => {
+    setAuthState(null)
+    void queryClient.invalidateQueries()
+  })
+
+  function handleLogoutClick() {
+    logout.mutate()
   }
 
+  const compact = pathname.startsWith('/rooms/')
+
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between overflow-hidden bg-background px-4 pt-4">
-      <Link className="flex items-center gap-2 select-none" to="/">
-        <Logo className="size-8" />
-        <Typography as="span" variant="large">
+    <header
+      className={cn(
+        'sticky top-0 z-50 flex shrink-0 items-center justify-between overflow-hidden bg-background px-4 transition-all duration-300',
+        compact ? 'h-10 pt-2' : 'h-16 pt-4',
+      )}
+    >
+      <Link
+        className={cn(
+          'flex items-center transition-all duration-300 select-none',
+          compact ? 'gap-3' : 'gap-2',
+        )}
+        to="/"
+      >
+        <Logo
+          className={cn(
+            'transition-all duration-300',
+            compact ? 'size-6' : 'size-8',
+          )}
+        />
+        <Typography
+          as="span"
+          className={compact ? 'text-md' : ''}
+          variant="large"
+        >
           good battle
         </Typography>
       </Link>
 
-      {IS_AUTHENTICATED && (
-        <div className="flex items-center gap-2">
-          <Button asChild size="lg" variant="ghost">
-            <Link to="/battles">
-              <Swords />
-              Мои баттлы
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/profile">
-              <User />
-              {USER_NAME}
-            </Link>
-          </Button>
-        </div>
+      {isAuthResolved && user && (
+        <ViewTransition>
+          {compact ? (
+            <div className="flex items-center gap-1" key="compact">
+              <Button asChild size="sm" variant="ghost">
+                <Link to="/profile">
+                  <User className="size-3.5" />
+                  {user.username}
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2" key="full">
+              <Button asChild size="lg" variant="ghost">
+                <Link to="/battles">
+                  <Swords />
+                  Мои баттлы
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/profile">
+                  <User />
+                  {user.username}
+                </Link>
+              </Button>
+              <Button
+                disabled={logout.isPending}
+                onClick={handleLogoutClick}
+                size="lg"
+                variant="ghost"
+              >
+                {logout.isPending && <Spinner />}
+                <LogOut />
+                Выйти
+              </Button>
+            </div>
+          )}
+        </ViewTransition>
       )}
     </header>
   )

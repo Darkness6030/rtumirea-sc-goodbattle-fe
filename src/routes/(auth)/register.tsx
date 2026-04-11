@@ -1,6 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { UserPlus } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
+import { useRegister } from '@/api'
 import {
   Button,
   Card,
@@ -10,17 +13,43 @@ import {
   CardTitle,
   Input,
   Label,
+  Spinner,
   Typography,
 } from '@/components/ui'
+import { useAuthStore } from '@/stores/auth-store'
 
-export const Route = createFileRoute('/_main/register')({
+export const Route = createFileRoute('/(auth)/register')({
   component: RegisterPage,
 })
 
 function RegisterPage() {
+  const navigate = useNavigate()
+  const setAuthState = useAuthStore((state) => state.setAuthState)
+  const register = useRegister((user) => {
+    setAuthState(user)
+    void navigate({ to: '/' })
+  })
+
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    // TODO: implement registration
+
+    if (!email.trim() || !password.trim() || !username.trim()) return
+
+    if (password !== confirmPassword) {
+      toast.error('Пароли не совпадают')
+      return
+    }
+
+    register.mutate({
+      email: email.trim(),
+      password,
+      username: username.trim(),
+    })
   }
 
   return (
@@ -40,8 +69,11 @@ function RegisterPage() {
               <Input
                 autoComplete="name"
                 id="name"
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Ваше имя"
+                required
                 type="text"
+                value={username}
               />
             </div>
 
@@ -50,8 +82,11 @@ function RegisterPage() {
               <Input
                 autoComplete="email"
                 id="email"
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                required
                 type="email"
+                value={email}
               />
             </div>
 
@@ -60,8 +95,12 @@ function RegisterPage() {
               <Input
                 autoComplete="new-password"
                 id="password"
+                minLength={6}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Придумайте пароль"
+                required
                 type="password"
+                value={password}
               />
             </div>
 
@@ -70,12 +109,22 @@ function RegisterPage() {
               <Input
                 autoComplete="new-password"
                 id="confirmPassword"
+                minLength={6}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Повторите пароль"
+                required
                 type="password"
+                value={confirmPassword}
               />
             </div>
 
-            <Button className="mt-2 w-full" size="lg" type="submit">
+            <Button
+              className="mt-2 w-full"
+              disabled={register.isPending}
+              size="lg"
+              type="submit"
+            >
+              {register.isPending && <Spinner />}
               Создать аккаунт
               <UserPlus />
             </Button>

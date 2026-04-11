@@ -10,10 +10,10 @@ export function getErrorMessage(error: unknown): string {
   if (
     error &&
     typeof error === 'object' &&
-    'error' in error &&
-    typeof (error as { error: string }).error === 'string'
+    'detail' in error &&
+    typeof (error as { detail: string }).detail === 'string'
   ) {
-    return (error as { error: string }).error
+    return (error as { detail: string }).detail
   }
   if (error instanceof Error) return error.message
   return 'Произошла неизвестная ошибка'

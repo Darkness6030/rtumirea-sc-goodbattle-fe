@@ -9,93 +9,99 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as CreateRoomRouteImport } from './routes/create-room'
-import { Route as BattlesRouteImport } from './routes/battles'
-import { Route as MainRouteImport } from './routes/_main'
-import { Route as MainIndexRouteImport } from './routes/_main/index'
-import { Route as RoomsRoomIdRouteImport } from './routes/rooms/$roomId'
-import { Route as MainRegisterRouteImport } from './routes/_main/register'
-import { Route as MainLoginRouteImport } from './routes/_main/login'
+import { Route as authRouteRouteImport } from './routes/(auth)/route'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
+import { Route as appIndexRouteImport } from './routes/(app)/index'
+import { Route as authRegisterRouteImport } from './routes/(auth)/register'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as appProfileRouteImport } from './routes/(app)/profile'
+import { Route as appCreateRoomRouteImport } from './routes/(app)/create-room'
+import { Route as appBattlesRouteImport } from './routes/(app)/battles'
+import { Route as appRoomsRoomIdRouteImport } from './routes/(app)/rooms/$roomId'
 
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const authRouteRoute = authRouteRouteImport.update({
+  id: '/(auth)',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreateRoomRoute = CreateRoomRouteImport.update({
-  id: '/create-room',
-  path: '/create-room',
+const appRouteRoute = appRouteRouteImport.update({
+  id: '/(app)',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BattlesRoute = BattlesRouteImport.update({
-  id: '/battles',
-  path: '/battles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MainRoute = MainRouteImport.update({
-  id: '/_main',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MainIndexRoute = MainIndexRouteImport.update({
+const appIndexRoute = appIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => MainRoute,
+  getParentRoute: () => appRouteRoute,
 } as any)
-const RoomsRoomIdRoute = RoomsRoomIdRouteImport.update({
-  id: '/rooms/$roomId',
-  path: '/rooms/$roomId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MainRegisterRoute = MainRegisterRouteImport.update({
+const authRegisterRoute = authRegisterRouteImport.update({
   id: '/register',
   path: '/register',
-  getParentRoute: () => MainRoute,
+  getParentRoute: () => authRouteRoute,
 } as any)
-const MainLoginRoute = MainLoginRouteImport.update({
+const authLoginRoute = authLoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => MainRoute,
+  getParentRoute: () => authRouteRoute,
+} as any)
+const appProfileRoute = appProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appCreateRoomRoute = appCreateRoomRouteImport.update({
+  id: '/create-room',
+  path: '/create-room',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appBattlesRoute = appBattlesRouteImport.update({
+  id: '/battles',
+  path: '/battles',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appRoomsRoomIdRoute = appRoomsRoomIdRouteImport.update({
+  id: '/rooms/$roomId',
+  path: '/rooms/$roomId',
+  getParentRoute: () => appRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof MainIndexRoute
-  '/battles': typeof BattlesRoute
-  '/create-room': typeof CreateRoomRoute
-  '/profile': typeof ProfileRoute
-  '/login': typeof MainLoginRoute
-  '/register': typeof MainRegisterRoute
-  '/rooms/$roomId': typeof RoomsRoomIdRoute
+  '/battles': typeof appBattlesRoute
+  '/create-room': typeof appCreateRoomRoute
+  '/profile': typeof appProfileRoute
+  '/login': typeof authLoginRoute
+  '/register': typeof authRegisterRoute
+  '/': typeof appIndexRoute
+  '/rooms/$roomId': typeof appRoomsRoomIdRoute
 }
 export interface FileRoutesByTo {
-  '/battles': typeof BattlesRoute
-  '/create-room': typeof CreateRoomRoute
-  '/profile': typeof ProfileRoute
-  '/login': typeof MainLoginRoute
-  '/register': typeof MainRegisterRoute
-  '/rooms/$roomId': typeof RoomsRoomIdRoute
-  '/': typeof MainIndexRoute
+  '/battles': typeof appBattlesRoute
+  '/create-room': typeof appCreateRoomRoute
+  '/profile': typeof appProfileRoute
+  '/login': typeof authLoginRoute
+  '/register': typeof authRegisterRoute
+  '/': typeof appIndexRoute
+  '/rooms/$roomId': typeof appRoomsRoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_main': typeof MainRouteWithChildren
-  '/battles': typeof BattlesRoute
-  '/create-room': typeof CreateRoomRoute
-  '/profile': typeof ProfileRoute
-  '/_main/login': typeof MainLoginRoute
-  '/_main/register': typeof MainRegisterRoute
-  '/rooms/$roomId': typeof RoomsRoomIdRoute
-  '/_main/': typeof MainIndexRoute
+  '/(app)': typeof appRouteRouteWithChildren
+  '/(auth)': typeof authRouteRouteWithChildren
+  '/(app)/battles': typeof appBattlesRoute
+  '/(app)/create-room': typeof appCreateRoomRoute
+  '/(app)/profile': typeof appProfileRoute
+  '/(auth)/login': typeof authLoginRoute
+  '/(auth)/register': typeof authRegisterRoute
+  '/(app)/': typeof appIndexRoute
+  '/(app)/rooms/$roomId': typeof appRoomsRoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/battles'
     | '/create-room'
     | '/profile'
     | '/login'
     | '/register'
+    | '/'
     | '/rooms/$roomId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -104,109 +110,131 @@ export interface FileRouteTypes {
     | '/profile'
     | '/login'
     | '/register'
-    | '/rooms/$roomId'
     | '/'
+    | '/rooms/$roomId'
   id:
     | '__root__'
-    | '/_main'
-    | '/battles'
-    | '/create-room'
-    | '/profile'
-    | '/_main/login'
-    | '/_main/register'
-    | '/rooms/$roomId'
-    | '/_main/'
+    | '/(app)'
+    | '/(auth)'
+    | '/(app)/battles'
+    | '/(app)/create-room'
+    | '/(app)/profile'
+    | '/(auth)/login'
+    | '/(auth)/register'
+    | '/(app)/'
+    | '/(app)/rooms/$roomId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  MainRoute: typeof MainRouteWithChildren
-  BattlesRoute: typeof BattlesRoute
-  CreateRoomRoute: typeof CreateRoomRoute
-  ProfileRoute: typeof ProfileRoute
-  RoomsRoomIdRoute: typeof RoomsRoomIdRoute
+  appRouteRoute: typeof appRouteRouteWithChildren
+  authRouteRoute: typeof authRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create-room': {
-      id: '/create-room'
-      path: '/create-room'
-      fullPath: '/create-room'
-      preLoaderRoute: typeof CreateRoomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/battles': {
-      id: '/battles'
-      path: '/battles'
-      fullPath: '/battles'
-      preLoaderRoute: typeof BattlesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_main': {
-      id: '/_main'
+    '/(auth)': {
+      id: '/(auth)'
       path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof MainRouteImport
+      fullPath: ''
+      preLoaderRoute: typeof authRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_main/': {
-      id: '/_main/'
+    '/(app)': {
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(app)/': {
+      id: '/(app)/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof MainIndexRouteImport
-      parentRoute: typeof MainRoute
+      preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
-    '/rooms/$roomId': {
-      id: '/rooms/$roomId'
-      path: '/rooms/$roomId'
-      fullPath: '/rooms/$roomId'
-      preLoaderRoute: typeof RoomsRoomIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_main/register': {
-      id: '/_main/register'
+    '/(auth)/register': {
+      id: '/(auth)/register'
       path: '/register'
       fullPath: '/register'
-      preLoaderRoute: typeof MainRegisterRouteImport
-      parentRoute: typeof MainRoute
+      preLoaderRoute: typeof authRegisterRouteImport
+      parentRoute: typeof authRouteRoute
     }
-    '/_main/login': {
-      id: '/_main/login'
+    '/(auth)/login': {
+      id: '/(auth)/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof MainLoginRouteImport
-      parentRoute: typeof MainRoute
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof authRouteRoute
+    }
+    '/(app)/profile': {
+      id: '/(app)/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof appProfileRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/create-room': {
+      id: '/(app)/create-room'
+      path: '/create-room'
+      fullPath: '/create-room'
+      preLoaderRoute: typeof appCreateRoomRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/battles': {
+      id: '/(app)/battles'
+      path: '/battles'
+      fullPath: '/battles'
+      preLoaderRoute: typeof appBattlesRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/rooms/$roomId': {
+      id: '/(app)/rooms/$roomId'
+      path: '/rooms/$roomId'
+      fullPath: '/rooms/$roomId'
+      preLoaderRoute: typeof appRoomsRoomIdRouteImport
+      parentRoute: typeof appRouteRoute
     }
   }
 }
 
-interface MainRouteChildren {
-  MainLoginRoute: typeof MainLoginRoute
-  MainRegisterRoute: typeof MainRegisterRoute
-  MainIndexRoute: typeof MainIndexRoute
+interface appRouteRouteChildren {
+  appBattlesRoute: typeof appBattlesRoute
+  appCreateRoomRoute: typeof appCreateRoomRoute
+  appProfileRoute: typeof appProfileRoute
+  appIndexRoute: typeof appIndexRoute
+  appRoomsRoomIdRoute: typeof appRoomsRoomIdRoute
 }
 
-const MainRouteChildren: MainRouteChildren = {
-  MainLoginRoute: MainLoginRoute,
-  MainRegisterRoute: MainRegisterRoute,
-  MainIndexRoute: MainIndexRoute,
+const appRouteRouteChildren: appRouteRouteChildren = {
+  appBattlesRoute: appBattlesRoute,
+  appCreateRoomRoute: appCreateRoomRoute,
+  appProfileRoute: appProfileRoute,
+  appIndexRoute: appIndexRoute,
+  appRoomsRoomIdRoute: appRoomsRoomIdRoute,
 }
 
-const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
+const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
+  appRouteRouteChildren,
+)
+
+interface authRouteRouteChildren {
+  authLoginRoute: typeof authLoginRoute
+  authRegisterRoute: typeof authRegisterRoute
+}
+
+const authRouteRouteChildren: authRouteRouteChildren = {
+  authLoginRoute: authLoginRoute,
+  authRegisterRoute: authRegisterRoute,
+}
+
+const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
+  authRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  MainRoute: MainRouteWithChildren,
-  BattlesRoute: BattlesRoute,
-  CreateRoomRoute: CreateRoomRoute,
-  ProfileRoute: ProfileRoute,
-  RoomsRoomIdRoute: RoomsRoomIdRoute,
+  appRouteRoute: appRouteRouteWithChildren,
+  authRouteRoute: authRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

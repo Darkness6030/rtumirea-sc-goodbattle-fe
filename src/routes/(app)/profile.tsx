@@ -9,6 +9,7 @@ import {
   Trophy,
 } from 'lucide-react'
 
+import { profileQueryOptions, queryClient, useProfileQuery } from '@/api'
 import {
   Button,
   Card,
@@ -16,18 +17,31 @@ import {
   CardHeader,
   CardTitle,
   Separator,
+  Spinner,
   Typography,
 } from '@/components/ui'
-import { MOCK_USER } from '@/lib/mock'
 
-export const Route = createFileRoute('/profile')({
+export const Route = createFileRoute('/(app)/profile')({
   component: ProfilePage,
+  loader: () => queryClient.ensureQueryData(profileQueryOptions()),
+  pendingComponent: PagePending,
 })
 
-function ProfilePage() {
-  const user = MOCK_USER
+function PagePending() {
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-1 items-center justify-center py-8">
+      <Spinner className="size-6" />
+    </div>
+  )
+}
 
-  const joinedDate = new Date(user.joinedAt).toLocaleDateString('ru-RU', {
+function ProfilePage() {
+  const profileQuery = useProfileQuery()
+  const profile = profileQuery.data
+
+  if (!profile) return null
+
+  const joinedDate = new Date(profile.created_at).toLocaleDateString('ru-RU', {
     month: 'long',
     year: 'numeric',
   })
@@ -48,15 +62,15 @@ function ProfilePage() {
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <div className="flex size-14 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-              {user.name[0]}
+              {profile.username[0]}
             </div>
             <div>
               <Typography className="font-medium" variant="h3">
-                {user.name}
+                {profile.username}
               </Typography>
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Mail className="size-3.5" />
-                <Typography variant="muted">{user.email}</Typography>
+                <Typography variant="muted">{profile.email}</Typography>
               </div>
             </div>
           </div>
@@ -76,27 +90,27 @@ function ProfilePage() {
           <StatCard
             icon={<Swords className="size-5" />}
             label="Баттлов сыграно"
-            value={String(user.battlesPlayed)}
+            value={String(profile.battles_played)}
           />
           <StatCard
             icon={<Crown className="size-5" />}
             label="Баттлов организовано"
-            value={String(user.battlesOrganized)}
+            value={String(profile.battles_organized)}
           />
           <StatCard
             icon={<Trophy className="size-5" />}
             label="Побед"
-            value={String(user.wins)}
+            value={String(profile.wins_count)}
           />
           <StatCard
             icon={<Percent className="size-5" />}
             label="Процент побед"
-            value={`${user.winRate}%`}
+            value={`${profile.win_rate}%`}
           />
           <StatCard
             icon={<Code2 className="size-5" />}
             label="Топ язык"
-            value={user.topLanguage}
+            value={profile.top_language ?? '—'}
           />
         </div>
       </div>

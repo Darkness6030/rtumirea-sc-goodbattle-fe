@@ -15,7 +15,7 @@ import {
   MOCK_TEST_RESULTS,
 } from '@/lib/battle-mock'
 
-export const Route = createFileRoute('/rooms/$roomId')({
+export const Route = createFileRoute('/(app)/rooms/$roomId')({
   component: BattleRoomPage,
 })
 

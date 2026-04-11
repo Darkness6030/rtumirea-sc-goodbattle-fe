@@ -3,6 +3,12 @@ import { ArrowLeft, ArrowRight, Code2, ListChecks, Timer } from 'lucide-react'
 import { useState } from 'react'
 
 import {
+  queryClient,
+  tasksQueryOptions,
+  useCreateRoom,
+  useTasksQuery,
+} from '@/api'
+import {
   Button,
   Card,
   CardContent,
@@ -12,22 +18,38 @@ import {
   Checkbox,
   Label,
   Slider,
+  Spinner,
   Typography,
 } from '@/components/ui'
-import { LANGUAGES, TASKS } from '@/lib/mock'
+import { LANGUAGES } from '@/lib/mock'
 
-export const Route = createFileRoute('/create-room')({
+export const Route = createFileRoute('/(app)/create-room')({
   component: CreateRoomPage,
+  loader: () => queryClient.ensureQueryData(tasksQueryOptions()),
+  pendingComponent: PagePending,
 })
 
 function CreateRoomPage() {
   const navigate = useNavigate()
+  const createRoom = useCreateRoom((data) => {
+    void navigate({
+      params: { roomId: data.room_id },
+      to: '/rooms/$roomId',
+    })
+  })
 
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
   const [timeLimit, setTimeLimit] = useState(10)
   const [selectedTasks, setSelectedTasks] = useState<string[]>([])
 
-  const isValid = selectedLanguages.length > 0 && selectedTasks.length > 0
+  const tasksQuery = useTasksQuery()
+
+  const isValid =
+    selectedLanguages.length > 0 &&
+    selectedTasks.length > 0 &&
+    !createRoom.isPending
+
+  const tasks = tasksQuery.data ?? []
 
   function toggleLanguage(id: string) {
     setSelectedLanguages((prev) =>
@@ -43,9 +65,14 @@ function CreateRoomPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: create room
 
-    navigate({ params: { roomId: 'mock' }, to: '/rooms/$roomId' })
+    if (!isValid) return
+
+    createRoom.mutate({
+      languages: selectedLanguages,
+      task_ids: selectedTasks,
+      time_limit: timeLimit,
+    })
   }
 
   return (
@@ -133,7 +160,7 @@ function CreateRoomPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3">
-              {TASKS.map((task) => (
+              {tasks.map((task) => (
                 <Label
                   className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal has-checked:border-primary/50 has-checked:bg-primary/5"
                   key={task.id}
@@ -153,15 +180,27 @@ function CreateRoomPage() {
                   </div>
                 </Label>
               ))}
+              {tasksQuery.isFetched && tasks.length === 0 && (
+                <Typography variant="muted">Список задач пуст</Typography>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Button className="w-full" disabled={!isValid} size="lg" type="submit">
+          {createRoom.isPending && <Spinner />}
           Продолжить
           <ArrowRight />
         </Button>
       </form>
+    </div>
+  )
+}
+
+function PagePending() {
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-1 items-center justify-center py-8">
+      <Spinner className="size-6" />
     </div>
   )
 }

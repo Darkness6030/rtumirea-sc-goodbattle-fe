@@ -1,8 +1,16 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Calendar, Crown, Plus, Trophy, Users } from 'lucide-react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  Calendar,
+  ChevronRight,
+  Crown,
+  Plus,
+  Trophy,
+  Users,
+} from 'lucide-react'
 
-import type { BattleHistoryItem } from '@/lib/mock'
+import type { components } from '@/api/__generated__/schema'
 
+import { battlesQueryOptions, queryClient, useBattlesQuery } from '@/api'
 import {
   Badge,
   Button,
@@ -10,6 +18,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Spinner,
   Tabs,
   TabsContent,
   TabsList,
@@ -17,21 +26,44 @@ import {
   Typography,
 } from '@/components/ui'
 import { LANGUAGE_LABELS } from '@/lib/battle-mock'
-import { MOCK_BATTLE_HISTORY } from '@/lib/mock'
+import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute('/battles')({
+type BattleHistoryItem = components['schemas']['BattleHistoryItemResponse']
+
+export const Route = createFileRoute('/(app)/battles')({
   component: BattlesPage,
+  loader: async () => {
+    await Promise.all([
+      queryClient.ensureQueryData(battlesQueryOptions('organizer')),
+      queryClient.ensureQueryData(battlesQueryOptions('participant')),
+    ])
+  },
+  pendingComponent: PagePending,
 })
 
 function BattleCard({ battle }: { battle: BattleHistoryItem }) {
+  const navigate = useNavigate()
+
   const date = new Date(battle.date).toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
 
+  function handleClick() {
+    if (battle.status !== 'completed') {
+      navigate({ params: { roomId: battle.id }, to: '/rooms/$roomId' })
+    }
+  }
+
   return (
-    <Card className="transition-colors hover:bg-muted/50">
+    <Card
+      className={cn(
+        'transition-colors hover:bg-muted/50',
+        battle.status !== 'completed' && 'cursor-pointer',
+      )}
+      onClick={handleClick}
+    >
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
@@ -42,20 +74,25 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
             )}
             {battle.title}
           </span>
-          {battle.place !== undefined && (
-            <Badge
-              variant={
-                battle.place === 1
-                  ? 'default'
-                  : battle.place <= 3
-                    ? 'secondary'
-                    : 'outline'
-              }
-            >
-              <Trophy className="size-3" />
-              {battle.place} место
-            </Badge>
-          )}
+          <span className="flex items-center gap-2">
+            {battle.place != null && (
+              <Badge
+                variant={
+                  battle.place === 1
+                    ? 'default'
+                    : battle.place <= 3
+                      ? 'secondary'
+                      : 'outline'
+                }
+              >
+                <Trophy className="size-3" />
+                {battle.place} место
+              </Badge>
+            )}
+            {battle.status !== 'completed' && (
+              <ChevronRight className="size-4 text-muted-foreground" />
+            )}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -68,7 +105,7 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
             {battle.participants} участников
           </Typography>
           <Typography variant="muted">
-            {battle.solvedTasks}/{battle.totalTasks} задач
+            {battle.solved_tasks}/{battle.total_tasks} задач
           </Typography>
           <div className="flex gap-1">
             {battle.languages.map((lang) => (
@@ -102,12 +139,11 @@ function BattleList({ battles }: { battles: BattleHistoryItem[] }) {
 }
 
 function BattlesPage() {
-  const participantBattles = MOCK_BATTLE_HISTORY.filter(
-    (b) => b.role === 'participant',
-  )
-  const organizerBattles = MOCK_BATTLE_HISTORY.filter(
-    (b) => b.role === 'organizer',
-  )
+  const participantBattlesQuery = useBattlesQuery('participant')
+  const organizerBattlesQuery = useBattlesQuery('organizer')
+
+  const participantBattles = participantBattlesQuery.data ?? []
+  const organizerBattles = organizerBattlesQuery.data ?? []
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 py-8">
@@ -126,15 +162,15 @@ function BattlesPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="participant">
+      <Tabs defaultValue="organizer">
         <TabsList>
-          <TabsTrigger value="participant">
-            <Users className="size-4" />
-            Участник ({participantBattles.length})
-          </TabsTrigger>
           <TabsTrigger value="organizer">
             <Crown className="size-4" />
             Организатор ({organizerBattles.length})
+          </TabsTrigger>
+          <TabsTrigger value="participant">
+            <Users className="size-4" />
+            Участник ({participantBattles.length})
           </TabsTrigger>
         </TabsList>
 
@@ -145,6 +181,14 @@ function BattlesPage() {
           <BattleList battles={organizerBattles} />
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function PagePending() {
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-1 items-center justify-center py-8">
+      <Spinner className="size-6" />
     </div>
   )
 }
