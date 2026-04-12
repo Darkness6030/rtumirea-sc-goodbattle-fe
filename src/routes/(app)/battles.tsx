@@ -63,6 +63,7 @@ function BattleCard({
   })
 
   const isInProgress = battle.status !== 'finished'
+  const isOrganizer = battle.role === 'organizer'
 
   function handleClick() {
     if (isInProgress) {
@@ -118,9 +119,11 @@ function BattleCard({
           <Typography variant="muted">
             {battle.participants} участников
           </Typography>
-          <Typography variant="muted">
-            {battle.solved_tasks}/{battle.total_tasks} задач
-          </Typography>
+          {!isOrganizer && (
+            <Typography variant="muted">
+              {battle.solved_tasks}/{battle.total_tasks} задач
+            </Typography>
+          )}
           <div className="flex gap-1">
             {battle.languages.map((lang) => (
               <Badge key={lang} variant="outline">
