@@ -15,4 +15,4 @@ export {
   useJoinRoom,
   useRoomQuery,
 } from './rooms'
-export { tasksQueryOptions, useTasksQuery } from './tasks'
+export { tasksQueryOptions, useCreateTask, useTasksQuery } from './tasks'

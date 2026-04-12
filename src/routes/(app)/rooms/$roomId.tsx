@@ -263,7 +263,7 @@ function BattleRoomPage() {
     })
 
     return unsubscribe
-  }, [participants])
+  }, [participants, currentParticipantId])
 
   useEffect(() => {
     function handleOffline() {
