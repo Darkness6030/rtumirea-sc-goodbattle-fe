@@ -40,6 +40,7 @@ function Header() {
           'flex items-center transition-all duration-300 select-none',
           compact ? 'gap-3' : 'gap-2',
         )}
+        tabIndex={-1}
         to="/"
       >
         <Logo
