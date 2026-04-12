@@ -1,13 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Crown,
-  ExternalLink,
-  LogIn,
-  Users,
-} from 'lucide-react'
-import { startTransition, useState, ViewTransition } from 'react'
+import { Crown, ExternalLink, LogIn, Users } from 'lucide-react'
+import { useState, ViewTransition } from 'react'
 
 import { useJoinRoom } from '@/api'
 import {
@@ -31,41 +24,24 @@ function Index() {
   const navigate = useNavigate()
   const joinRoom = useJoinRoom()
 
-  const [name, setName] = useState('')
   const [roomCode, setRoomCode] = useState('')
-  const [step, setStep] = useState<'code' | 'name'>('code')
-
-  function handleBackClick() {
-    startTransition(() => setStep('code'))
-  }
 
   async function handleJoinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    if (step === 'code') {
-      if (roomCode.trim()) {
-        startTransition(() => {
-          setStep('name')
-        })
-      }
-    } else {
-      if (name.trim()) {
-        try {
-          const data = await joinRoom.mutateAsync({
-            body: {
-              code: roomCode.trim(),
-              username: name.trim(),
-            },
-          })
+    try {
+      const data = await joinRoom.mutateAsync({
+        body: {
+          code: roomCode.trim(),
+        },
+      })
 
-          void navigate({
-            params: { roomId: data.room_id },
-            to: '/rooms/$roomId',
-          })
-        } catch {
-          return
-        }
-      }
+      void navigate({
+        params: { roomId: data.room_id },
+        to: '/rooms/$roomId',
+      })
+    } catch {
+      return
     }
   }
 
@@ -109,18 +85,6 @@ function Index() {
             <CardTitle className="flex items-center gap-2 text-lg">
               <Users className="size-5 text-primary" />
               Участник
-              {step === 'name' && (
-                <ViewTransition>
-                  <Button
-                    className="ml-auto text-muted-foreground"
-                    onClick={handleBackClick}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    <ArrowLeft /> Назад
-                  </Button>
-                </ViewTransition>
-              )}
             </CardTitle>
             <CardDescription>
               Присоединитесь к существующей комнате
@@ -129,21 +93,12 @@ function Index() {
           <CardContent>
             <form className="flex flex-col gap-4" onSubmit={handleJoinSubmit}>
               <ViewTransition>
-                {step === 'code' ? (
-                  <Input
-                    disabled={joinRoom.isPending}
-                    onChange={(e) => setRoomCode(e.target.value)}
-                    placeholder="Код комнаты"
-                    value={roomCode}
-                  />
-                ) : (
-                  <Input
-                    disabled={joinRoom.isPending}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ваше имя"
-                    value={name}
-                  />
-                )}
+                <Input
+                  disabled={joinRoom.isPending}
+                  onChange={(e) => setRoomCode(e.target.value)}
+                  placeholder="Код комнаты"
+                  value={roomCode}
+                />
 
                 <Button
                   className="w-full"
@@ -151,18 +106,9 @@ function Index() {
                   size="lg"
                   type="submit"
                 >
-                  {step === 'code' ? (
-                    <>
-                      Продолжить
-                      <ArrowRight />
-                    </>
-                  ) : (
-                    <>
-                      {joinRoom.isPending && <Spinner />}
-                      Войти
-                      <LogIn />
-                    </>
-                  )}
+                  {joinRoom.isPending && <Spinner />}
+                  Войти
+                  <LogIn />
                 </Button>
               </ViewTransition>
             </form>
