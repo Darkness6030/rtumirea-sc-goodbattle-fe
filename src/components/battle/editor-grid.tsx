@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { Participant } from '@/lib/battle-types'
 
@@ -82,6 +82,49 @@ function OrganizerGrid() {
     participants[2]?.id ?? null,
     participants[3]?.id ?? null,
   ])
+  const previousParticipantIdsRef = useRef<string[]>(
+    participants.map((participant) => participant.id),
+  )
+
+  useEffect(() => {
+    const participantIds = participants.map((participant) => participant.id)
+    const previousParticipantIds = previousParticipantIdsRef.current
+    const addedParticipantIds = participantIds.filter(
+      (id) => !previousParticipantIds.includes(id),
+    )
+
+    setSlots((prev) => {
+      const next = prev.map((slotId) =>
+        slotId && participantIds.includes(slotId) ? slotId : null,
+      )
+
+      for (const addedId of addedParticipantIds) {
+        if (next.includes(addedId)) {
+          continue
+        }
+
+        const emptyIndex = next.findIndex((slotId) => slotId === null)
+        if (emptyIndex !== -1) {
+          next[emptyIndex] = addedId
+        }
+      }
+
+      for (const participantId of participantIds) {
+        if (next.includes(participantId)) {
+          continue
+        }
+
+        const emptyIndex = next.findIndex((slotId) => slotId === null)
+        if (emptyIndex !== -1) {
+          next[emptyIndex] = participantId
+        }
+      }
+
+      return next
+    })
+
+    previousParticipantIdsRef.current = participantIds
+  }, [participants])
 
   function selectSlot(index: number, id: string) {
     setSlots((prev) => {
@@ -165,6 +208,50 @@ function ParticipantGrid() {
   const [bottomOtherId, setBottomOtherId] = useState<null | string>(
     others[1]?.id ?? null,
   )
+  const previousOtherIdsRef = useRef<string[]>(
+    others.map((participant) => participant.id),
+  )
+
+  useEffect(() => {
+    const previousOtherIds = previousOtherIdsRef.current
+    const otherIds = others.map((participant) => participant.id)
+    const addedIds = otherIds.filter((id) => !previousOtherIds.includes(id))
+
+    let nextTopOtherId =
+      topOtherId && otherIds.includes(topOtherId)
+        ? topOtherId
+        : (otherIds[0] ?? null)
+
+    let nextBottomOtherId =
+      bottomOtherId &&
+      otherIds.includes(bottomOtherId) &&
+      bottomOtherId !== nextTopOtherId
+        ? bottomOtherId
+        : (otherIds.find((id) => id !== nextTopOtherId) ?? null)
+
+    if (addedIds.length > 0) {
+      const newParticipantId = addedIds[addedIds.length - 1]
+
+      if (nextTopOtherId !== newParticipantId) {
+        const previousTopOtherId = nextTopOtherId
+        nextTopOtherId = newParticipantId
+        nextBottomOtherId =
+          previousTopOtherId && previousTopOtherId !== newParticipantId
+            ? previousTopOtherId
+            : (otherIds.find((id) => id !== nextTopOtherId) ?? null)
+      }
+    }
+
+    if (nextTopOtherId !== topOtherId) {
+      setTopOtherId(nextTopOtherId)
+    }
+
+    if (nextBottomOtherId !== bottomOtherId) {
+      setBottomOtherId(nextBottomOtherId)
+    }
+
+    previousOtherIdsRef.current = otherIds
+  }, [others, topOtherId, bottomOtherId])
 
   function selectOther(index: number, id: string) {
     if (index === 0) {
