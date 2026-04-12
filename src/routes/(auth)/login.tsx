@@ -15,7 +15,6 @@ import {
   Spinner,
   Typography,
 } from '@/components/ui'
-import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/(auth)/login')({
   component: LoginPage,
@@ -23,24 +22,27 @@ export const Route = createFileRoute('/(auth)/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
-  const setAuthState = useAuthStore((state) => state.setAuthState)
-  const login = useLogin((user) => {
-    setAuthState(user)
-    void navigate({ to: '/' })
-  })
+  const login = useLogin()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (!email.trim() || !password.trim()) return
 
-    login.mutate({
-      email: email.trim(),
-      password,
-    })
+    try {
+      await login.mutateAsync({
+        body: {
+          email: email.trim(),
+          password,
+        },
+      })
+      void navigate({ to: '/' })
+    } catch {
+      return
+    }
   }
 
   return (

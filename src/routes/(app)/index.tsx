@@ -29,12 +29,7 @@ export const Route = createFileRoute('/(app)/')({
 
 function Index() {
   const navigate = useNavigate()
-  const joinRoom = useJoinRoom((data) => {
-    void navigate({
-      params: { roomId: data.room_id },
-      to: '/rooms/$roomId',
-    })
-  })
+  const joinRoom = useJoinRoom()
 
   const [name, setName] = useState('')
   const [roomCode, setRoomCode] = useState('')
@@ -44,7 +39,7 @@ function Index() {
     startTransition(() => setStep('code'))
   }
 
-  function handleJoinSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleJoinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (step === 'code') {
@@ -55,10 +50,21 @@ function Index() {
       }
     } else {
       if (name.trim()) {
-        joinRoom.mutate({
-          code: roomCode.trim(),
-          username: name.trim(),
-        })
+        try {
+          const data = await joinRoom.mutateAsync({
+            body: {
+              code: roomCode.trim(),
+              username: name.trim(),
+            },
+          })
+
+          void navigate({
+            params: { roomId: data.room_id },
+            to: '/rooms/$roomId',
+          })
+        } catch {
+          return
+        }
       }
     }
   }
@@ -138,6 +144,7 @@ function Index() {
                     value={name}
                   />
                 )}
+
                 <Button
                   className="w-full"
                   disabled={joinRoom.isPending}

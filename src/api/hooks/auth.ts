@@ -1,18 +1,6 @@
-import { useMutation } from '@tanstack/react-query'
+import { useAuthStore } from '@/stores/auth-store'
 
-import { fetchClient } from '../client'
 import { $api, queryClient } from '../query-client'
-
-type LoginBody = {
-  email: string
-  password: string
-}
-
-type RegisterBody = {
-  email: string
-  password: string
-  username: string
-}
 
 export function authMeQueryOptions() {
   return $api.queryOptions('get', '/api/auth/me', undefined, {
@@ -36,51 +24,30 @@ export function useAuthMeQuery() {
   })
 }
 
-export function useLogin(
-  onSuccess?: (user: Awaited<ReturnType<typeof login>>) => void,
-) {
-  return useMutation({
-    mutationFn: login,
-    onSuccess,
-  })
-}
-
-export function useLogout(onSuccess?: () => void) {
-  return useMutation({
-    mutationFn: async () => {
-      const { error } = await fetchClient.POST('/api/auth/logout', {})
-
-      if (error) throw error
+export function useLogin() {
+  return $api.useMutation('post', '/api/auth/login', {
+    onSuccess: (user) => {
+      useAuthStore.getState().setAuthState(user)
+      queryClient.setQueryData(authMeQueryOptions().queryKey, user)
     },
-    onSuccess,
   })
 }
 
-export function useRegister(
-  onSuccess?: (user: Awaited<ReturnType<typeof register>>) => void,
-) {
-  return useMutation({
-    mutationFn: register,
-    onSuccess,
+export function useLogout() {
+  return $api.useMutation('post', '/api/auth/logout', {
+    onSuccess: () => {
+      useAuthStore.getState().setAuthState(null)
+      queryClient.removeQueries({ queryKey: authMeQueryOptions().queryKey })
+      void queryClient.invalidateQueries()
+    },
   })
 }
 
-async function login(body: LoginBody) {
-  const { data, error } = await fetchClient.POST('/api/auth/login', { body })
-
-  if (error) throw error
-  if (!data) throw new Error('Login failed')
-
-  return data
-}
-
-async function register(body: RegisterBody) {
-  const { data, error } = await fetchClient.POST('/api/auth/register', {
-    body,
+export function useRegister() {
+  return $api.useMutation('post', '/api/auth/register', {
+    onSuccess: (user) => {
+      useAuthStore.getState().setAuthState(user)
+      queryClient.setQueryData(authMeQueryOptions().queryKey, user)
+    },
   })
-
-  if (error) throw error
-  if (!data) throw new Error('Registration failed')
-
-  return data
 }

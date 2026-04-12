@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { LogOut, Swords, User } from 'lucide-react'
 import { ViewTransition } from 'react'
 
-import { queryClient, useLogout } from '@/api'
+import { useLogout } from '@/api'
 import Logo from '@/icons/logo.svg'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
@@ -13,18 +13,17 @@ function Header() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const isAuthResolved = useAuthStore((state) => state.isAuthResolved)
-  const setAuthState = useAuthStore((state) => state.setAuthState)
   const user = useAuthStore((state) => state.user)
 
-  const logout = useLogout(() => {
-    setAuthState(null)
-    void queryClient.invalidateQueries()
+  const logout = useLogout()
 
-    navigate({ to: '/login' })
-  })
-
-  function handleLogoutClick() {
-    logout.mutate()
+  async function handleLogoutClick() {
+    try {
+      await logout.mutateAsync({})
+      void navigate({ to: '/login' })
+    } catch {
+      return
+    }
   }
 
   const compact = pathname.startsWith('/rooms/')

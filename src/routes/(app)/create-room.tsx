@@ -31,12 +31,7 @@ export const Route = createFileRoute('/(app)/create-room')({
 
 function CreateRoomPage() {
   const navigate = useNavigate()
-  const createRoom = useCreateRoom((data) => {
-    void navigate({
-      params: { roomId: data.room_id },
-      to: '/rooms/$roomId',
-    })
-  })
+  const createRoom = useCreateRoom()
 
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
   const [timeLimit, setTimeLimit] = useState(10)
@@ -63,16 +58,27 @@ function CreateRoomPage() {
     )
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!isValid) return
 
-    createRoom.mutate({
-      languages: selectedLanguages,
-      task_ids: selectedTasks,
-      time_limit: timeLimit,
-    })
+    try {
+      const data = await createRoom.mutateAsync({
+        body: {
+          languages: selectedLanguages,
+          task_ids: selectedTasks,
+          time_limit: timeLimit,
+        },
+      })
+
+      void navigate({
+        params: { roomId: data.room_id },
+        to: '/rooms/$roomId',
+      })
+    } catch {
+      return
+    }
   }
 
   return (

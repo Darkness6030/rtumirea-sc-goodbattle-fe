@@ -16,7 +16,6 @@ import {
   Spinner,
   Typography,
 } from '@/components/ui'
-import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/(auth)/register')({
   component: RegisterPage,
@@ -24,18 +23,14 @@ export const Route = createFileRoute('/(auth)/register')({
 
 function RegisterPage() {
   const navigate = useNavigate()
-  const setAuthState = useAuthStore((state) => state.setAuthState)
-  const register = useRegister((user) => {
-    setAuthState(user)
-    void navigate({ to: '/' })
-  })
+  const register = useRegister()
 
   const [confirmPassword, setConfirmPassword] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (!email.trim() || !password.trim() || !username.trim()) return
@@ -45,11 +40,18 @@ function RegisterPage() {
       return
     }
 
-    register.mutate({
-      email: email.trim(),
-      password,
-      username: username.trim(),
-    })
+    try {
+      await register.mutateAsync({
+        body: {
+          email: email.trim(),
+          password,
+          username: username.trim(),
+        },
+      })
+      void navigate({ to: '/' })
+    } catch {
+      return
+    }
   }
 
   return (
