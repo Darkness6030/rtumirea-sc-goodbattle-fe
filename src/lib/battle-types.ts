@@ -31,9 +31,21 @@ type Role = 'organizer' | 'participant'
 type RoomResponse = components['schemas']['RoomResponse']
 
 type TestResult = {
-  actual: string
-  expected: string
-  input: string
+  actual: null | string
+  error:
+    | 'compile_error'
+    | 'runtime_error'
+    | 'time_limit_exceeded'
+    | 'wrong_answer'
+    | null
+  expected: null | string
+  input: null | string
+  log?: null | {
+    exit_code: null | number
+    stderr: null | string
+    stdout: null | string
+    timed_out: boolean
+  }
   passed: boolean
 }
 

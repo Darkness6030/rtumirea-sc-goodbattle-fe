@@ -72,7 +72,7 @@ type RoomSocketServerMessageMap = {
   }
   run_code_result: {
     results: TestResult[]
-    taskId: string
+    task_id: string
   }
   status_change: {
     status: BattleStatus

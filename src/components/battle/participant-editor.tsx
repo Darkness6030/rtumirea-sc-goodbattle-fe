@@ -121,21 +121,82 @@ function ParticipantEditor({
                 )}
                 key={i}
               >
-                {r.passed ? (
-                  <CheckCircle className="mt-0.5 size-3 shrink-0" />
-                ) : (
-                  <XCircle className="mt-0.5 size-3 shrink-0" />
-                )}
-                <div>
-                  <span className="text-muted-foreground">Тест {i + 1}:</span>{' '}
-                  {r.passed ? (
-                    'OK'
-                  ) : (
+                {(() => {
+                  const actualValue = r.actual ?? ''
+                  const detailValue =
+                    r.log?.stderr?.trim() ||
+                    r.actual?.trim() ||
+                    r.log?.stdout?.trim() ||
+                    ''
+                  const expectedValue = r.expected ?? ''
+
+                  return (
                     <>
-                      ожидалось {r.expected}, получено {r.actual}
+                      {r.passed ? (
+                        <CheckCircle className="mt-0.5 size-3 shrink-0" />
+                      ) : (
+                        <XCircle className="mt-0.5 size-3 shrink-0" />
+                      )}
+                      <div>
+                        <span className="text-muted-foreground">
+                          Тест {i + 1}:
+                        </span>{' '}
+                        {r.passed ? (
+                          'OK'
+                        ) : (
+                          <>
+                            {r.error && (
+                              <span className="text-destructive-foreground">
+                                {r.error.toUpperCase()}
+                              </span>
+                            )}
+
+                            {r.error === 'wrong_answer' && (
+                              <>
+                                <div className="flex items-start gap-1">
+                                  <span className="text-muted-foreground">
+                                    Ожидалось:
+                                  </span>
+                                  <span className="break-words">
+                                    {expectedValue}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-start gap-1">
+                                  <span className="text-muted-foreground">
+                                    Получено:
+                                  </span>
+                                  <span className="break-words">
+                                    {actualValue}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+
+                            {r.error !== 'wrong_answer' &&
+                              detailValue.length > 0 && (
+                                <>
+                                  <div className="text-muted-foreground">
+                                    Детали:
+                                  </div>
+                                  <pre className="overflow-x-auto break-words whitespace-pre-wrap text-current">
+                                    {detailValue}
+                                  </pre>
+                                </>
+                              )}
+
+                            {r.error !== 'wrong_answer' &&
+                              r.log?.exit_code !== null && (
+                                <div className="text-muted-foreground">
+                                  Exit code: {r.log?.exit_code}
+                                </div>
+                              )}
+                          </>
+                        )}
+                      </div>
                     </>
-                  )}
-                </div>
+                  )
+                })()}
               </div>
             ))}
           </div>
