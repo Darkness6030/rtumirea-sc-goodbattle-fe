@@ -6,6 +6,7 @@ import {
   queryClient,
   tasksQueryOptions,
   useCreateRoom,
+  useLanguagesQuery,
   useTasksQuery,
 } from '@/api'
 import {
@@ -21,7 +22,6 @@ import {
   Spinner,
   Typography,
 } from '@/components/ui'
-import { LANGUAGES } from '@/lib/mock'
 
 export const Route = createFileRoute('/(app)/create-room')({
   component: CreateRoomPage,
@@ -37,14 +37,13 @@ function CreateRoomPage() {
   const [timeLimit, setTimeLimit] = useState(10)
   const [selectedTasks, setSelectedTasks] = useState<string[]>([])
 
+  const languagesQuery = useLanguagesQuery()
   const tasksQuery = useTasksQuery()
 
   const isValid =
     selectedLanguages.length > 0 &&
     selectedTasks.length > 0 &&
     !createRoom.isPending
-
-  const tasks = tasksQuery.data ?? []
 
   function toggleLanguage(id: string) {
     setSelectedLanguages((prev) =>
@@ -112,16 +111,17 @@ function CreateRoomPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {LANGUAGES.map((lang) => (
+              {!languagesQuery.data && languagesQuery.isPending && <Spinner />}
+              {languagesQuery.data?.map((lang) => (
                 <Label
                   className="flex items-center gap-2 font-normal"
                   key={lang.id}
                 >
                   <Checkbox
-                    checked={selectedLanguages.includes(lang.id)}
-                    onCheckedChange={() => toggleLanguage(lang.id)}
+                    checked={selectedLanguages.includes(lang.code)}
+                    onCheckedChange={() => toggleLanguage(lang.code)}
                   />
-                  {lang.label}
+                  {lang.name}
                 </Label>
               ))}
             </div>
@@ -166,7 +166,8 @@ function CreateRoomPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3">
-              {tasks.map((task) => (
+              {!tasksQuery.data && tasksQuery.isPending && <Spinner />}
+              {tasksQuery.data?.map((task) => (
                 <Label
                   className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal has-checked:border-primary/50 has-checked:bg-primary/5"
                   key={task.id}
@@ -186,7 +187,7 @@ function CreateRoomPage() {
                   </div>
                 </Label>
               ))}
-              {tasksQuery.isFetched && tasks.length === 0 && (
+              {tasksQuery.isFetched && tasksQuery.data?.length === 0 && (
                 <Typography variant="muted">Список задач пуст</Typography>
               )}
             </div>
