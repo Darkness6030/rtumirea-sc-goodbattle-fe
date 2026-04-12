@@ -124,20 +124,27 @@ function ParticipantEditor({
       </div>
 
       <CardContent className="min-h-0 flex-1 overflow-auto p-0">
-        <CodeEditor
-          code={participant.code}
-          language={participant.language}
-          onChange={
-            isCurrentUser
-              ? (code) => onCodeChange(participant.id, code)
-              : undefined
-          }
-          readOnly={
-            !isCurrentUser ||
-            status !== 'running' ||
-            isCurrentTaskSolvedByCurrentUser
-          }
-        />
+        <div
+          className={cn(
+            'h-full',
+            !isCurrentUser && isCurrentTaskSolvedByParticipant && 'blur-sm',
+          )}
+        >
+          <CodeEditor
+            code={participant.code}
+            language={participant.language}
+            onChange={
+              isCurrentUser
+                ? (code) => onCodeChange(participant.id, code)
+                : undefined
+            }
+            readOnly={
+              !isCurrentUser ||
+              status !== 'running' ||
+              isCurrentTaskSolvedByCurrentUser
+            }
+          />
+        </div>
       </CardContent>
 
       {isCurrentUser && testResults && (
