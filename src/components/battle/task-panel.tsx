@@ -34,6 +34,7 @@ function TaskPanel() {
     currentTaskIndex,
     nextTaskTitle,
     onTimerEnd,
+    participantsRating,
     remainingSeconds,
     role,
     roomCode,
@@ -123,6 +124,33 @@ function TaskPanel() {
             ))}
           </div>
         )}
+
+        <Separator />
+
+        <div className="flex flex-col gap-2">
+          <Typography className="font-medium" variant="h3">
+            Рейтинг
+          </Typography>
+          {participantsRating.length === 0 ? (
+            <Typography variant="muted">Рейтинг пока пуст</Typography>
+          ) : (
+            participantsRating.map((participant) => (
+              <Card key={participant.participantId} size="sm">
+                <CardContent className="flex items-center gap-2 font-mono text-sm">
+                  <span className="text-muted-foreground tabular-nums">
+                    #{participant.place}
+                  </span>
+                  <Typography className="flex-1" variant="small">
+                    {participant.username}
+                  </Typography>
+                  <Badge variant="secondary">
+                    {participant.solvedTasksCount}
+                  </Badge>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

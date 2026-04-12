@@ -27,6 +27,8 @@ function ParticipantEditor({
   participant: Participant
 }) {
   const {
+    currentTaskSolvedParticipantIds,
+    isCurrentTaskSolvedByCurrentUser,
     isRunningCode,
     languageNameByCode,
     languages,
@@ -36,6 +38,9 @@ function ParticipantEditor({
     status,
     testResults,
   } = useBattle()
+
+  const isCurrentTaskSolvedByParticipant =
+    currentTaskSolvedParticipantIds.includes(participant.id)
 
   return (
     <Card
@@ -59,7 +64,16 @@ function ParticipantEditor({
         <div className="flex-1" />
         {isCurrentUser ? (
           <>
+            {isCurrentTaskSolvedByParticipant && (
+              <Badge
+                className="bg-green-500/15 text-green-700 dark:text-green-400"
+                variant="secondary"
+              >
+                Решено
+              </Badge>
+            )}
             <Select
+              disabled={isCurrentTaskSolvedByCurrentUser}
               onValueChange={onLanguageChange}
               value={participant.language}
             >
@@ -75,7 +89,11 @@ function ParticipantEditor({
               </SelectContent>
             </Select>
             <Button
-              disabled={isRunningCode || status !== 'running'}
+              disabled={
+                isCurrentTaskSolvedByCurrentUser ||
+                isRunningCode ||
+                status !== 'running'
+              }
               onClick={onRunCode}
               size="sm"
               variant="outline"
@@ -89,9 +107,19 @@ function ParticipantEditor({
             </Button>
           </>
         ) : (
-          <Badge variant="secondary">
-            {languageNameByCode[participant.language] ?? participant.language}
-          </Badge>
+          <>
+            {isCurrentTaskSolvedByParticipant && (
+              <Badge
+                className="bg-green-500/15 text-green-700 dark:text-green-400"
+                variant="secondary"
+              >
+                Решено
+              </Badge>
+            )}
+            <Badge variant="secondary">
+              {languageNameByCode[participant.language] ?? participant.language}
+            </Badge>
+          </>
         )}
       </div>
 
@@ -104,7 +132,11 @@ function ParticipantEditor({
               ? (code) => onCodeChange(participant.id, code)
               : undefined
           }
-          readOnly={!isCurrentUser || status !== 'running'}
+          readOnly={
+            !isCurrentUser ||
+            status !== 'running' ||
+            isCurrentTaskSolvedByCurrentUser
+          }
         />
       </CardContent>
 

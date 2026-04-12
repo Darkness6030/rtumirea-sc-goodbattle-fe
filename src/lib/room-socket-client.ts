@@ -70,6 +70,12 @@ type RoomSocketServerMessageMap = {
     id: string
     user_id: string
   }
+  participant_task_solved: {
+    participant_id: string
+    solved_task_ids: string[]
+    task_id: string
+    user_id: string
+  }
   run_code_result: {
     results: TestResult[]
     task_id: string
@@ -242,6 +248,7 @@ function isRoomSocketServerMessageType(
     value === 'next_task' ||
     value === 'participant_joined' ||
     value === 'participant_left' ||
+    value === 'participant_task_solved' ||
     value === 'run_code_result' ||
     value === 'status_change'
   )
@@ -307,6 +314,11 @@ function parseServerMessage(
         return {
           data: payload as RoomSocketServerMessageMap['participant_left'],
           type: 'participant_left',
+        }
+      case 'participant_task_solved':
+        return {
+          data: payload as RoomSocketServerMessageMap['participant_task_solved'],
+          type: 'participant_task_solved',
         }
       case 'run_code_result':
         return {

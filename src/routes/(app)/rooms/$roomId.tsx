@@ -27,6 +27,15 @@ import { useAuthStore } from '@/stores/auth-store'
 
 let roomSocketDisconnectTimeout: null | number = null
 
+type RoomParticipantSolvedTasks = {
+  solved_task_ids: string[]
+  user_id: string
+}
+
+type RoomWithParticipantSolvedTasks = {
+  participants_solved_tasks?: RoomParticipantSolvedTasks[]
+}
+
 export const Route = createFileRoute('/(app)/rooms/$roomId')({
   beforeLoad: async ({ params }) => {
     if (!window.navigator.onLine) {
@@ -84,6 +93,14 @@ function BattleRoomPage() {
   const [testResults, setTestResults] = useState<null | TestResult[]>(null)
   const [battleResults, setBattleResults] = useState<BattleResult[]>([])
   const [isRunningCode, setIsRunningCode] = useState(false)
+  const [
+    participantSolvedTaskIdsByUserId,
+    setParticipantSolvedTaskIdsByUserId,
+  ] = useState<Record<string, string[]>>(() =>
+    toSolvedTaskIdsByUserId(
+      (initialRoom as RoomWithParticipantSolvedTasks).participants_solved_tasks,
+    ),
+  )
 
   const tasks = useMemo(
     () =>
@@ -111,6 +128,47 @@ function BattleRoomPage() {
   )?.id
 
   const currentTask = tasks[currentTaskIndex] ?? tasks[0]
+
+  const isCurrentTaskSolvedByCurrentUser =
+    participantSolvedTaskIdsByUserId[user.id]?.includes(
+      currentTask?.id ?? '',
+    ) ?? false
+
+  const currentTaskSolvedParticipantIds = useMemo(
+    () =>
+      participants
+        .filter((participant) =>
+          participantSolvedTaskIdsByUserId[participant.userId]?.includes(
+            currentTask.id,
+          ),
+        )
+        .map((participant) => participant.id),
+    [currentTask.id, participantSolvedTaskIdsByUserId, participants],
+  )
+
+  const participantsRating = useMemo(
+    () =>
+      participants
+        .map((participant) => ({
+          participantId: participant.id,
+          solvedTasksCount:
+            participantSolvedTaskIdsByUserId[participant.userId]?.length ?? 0,
+          userId: participant.userId,
+          username: participant.username,
+        }))
+        .sort((a, b) => {
+          if (b.solvedTasksCount !== a.solvedTasksCount) {
+            return b.solvedTasksCount - a.solvedTasksCount
+          }
+
+          return a.username.localeCompare(b.username, 'ru')
+        })
+        .map((participant, index) => ({
+          ...participant,
+          place: index + 1,
+        })),
+    [participantSolvedTaskIdsByUserId, participants],
+  )
 
   if (!currentTask) {
     throw new Error('В комнате нет задач')
@@ -232,6 +290,23 @@ function BattleRoomPage() {
           )
           break
         }
+        case 'participant_task_solved': {
+          setParticipantSolvedTaskIdsByUserId((prev) => ({
+            ...prev,
+            [message.data.user_id]: message.data.solved_task_ids,
+          }))
+
+          const solvedParticipantName = participants.find(
+            (participant) => participant.id === message.data.participant_id,
+          )?.username
+
+          toast.success(
+            solvedParticipantName
+              ? `${solvedParticipantName} решил задачу`
+              : 'Участник решил задачу',
+          )
+          break
+        }
         case 'run_code_result': {
           setIsRunningCode(false)
           setTestResults(message.data.results)
@@ -318,6 +393,10 @@ function BattleRoomPage() {
         return
       }
 
+      if (isCurrentTaskSolvedByCurrentUser) {
+        return
+      }
+
       setParticipants((prev) =>
         prev.map((participant) =>
           participant.id === participantId
@@ -333,7 +412,7 @@ function BattleRoomPage() {
         type: 'code_update',
       })
     },
-    [currentParticipantId],
+    [currentParticipantId, isCurrentTaskSolvedByCurrentUser],
   )
 
   const onLanguageChange = useCallback(
@@ -424,6 +503,8 @@ function BattleRoomPage() {
       currentParticipantId,
       currentTask,
       currentTaskIndex,
+      currentTaskSolvedParticipantIds,
+      isCurrentTaskSolvedByCurrentUser,
       isRunningCode,
       languageNameByCode,
       languages: initialRoom.languages,
@@ -437,6 +518,7 @@ function BattleRoomPage() {
       onStart,
       onTimerEnd,
       participants,
+      participantsRating,
       remainingSeconds: initialRoom.remaining_seconds,
       role,
       roomCode: initialRoom.code,
@@ -449,6 +531,8 @@ function BattleRoomPage() {
       currentParticipantId,
       currentTask,
       currentTaskIndex,
+      currentTaskSolvedParticipantIds,
+      isCurrentTaskSolvedByCurrentUser,
       initialRoom.code,
       initialRoom.languages,
       initialRoom.remaining_seconds,
@@ -466,6 +550,7 @@ function BattleRoomPage() {
       onStart,
       onTimerEnd,
       participants,
+      participantsRating,
       role,
       status,
       testResults,
@@ -503,5 +588,20 @@ function PagePending() {
     <div className="flex flex-1 items-center justify-center">
       <Spinner />
     </div>
+  )
+}
+
+function toSolvedTaskIdsByUserId(
+  participantsSolvedTasks?: RoomParticipantSolvedTasks[],
+) {
+  if (!participantsSolvedTasks || participantsSolvedTasks.length === 0) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    participantsSolvedTasks.map((participantSolvedTasks) => [
+      participantSolvedTasks.user_id,
+      participantSolvedTasks.solved_task_ids,
+    ]),
   )
 }

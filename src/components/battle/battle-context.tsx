@@ -12,6 +12,8 @@ type BattleContextValue = {
   currentParticipantId?: string
   currentTask: BattleTask
   currentTaskIndex: number
+  currentTaskSolvedParticipantIds: string[]
+  isCurrentTaskSolvedByCurrentUser: boolean
   isRunningCode: boolean
   languageNameByCode: Record<string, string>
   languages: string[]
@@ -25,6 +27,13 @@ type BattleContextValue = {
   onStart: () => void
   onTimerEnd: () => void
   participants: Participant[]
+  participantsRating: {
+    participantId: string
+    place: number
+    solvedTasksCount: number
+    userId: string
+    username: string
+  }[]
   remainingSeconds: number
   role: Role
   roomCode: string
