@@ -1,6 +1,6 @@
 import { Flag, Pause, Play, SkipForward } from 'lucide-react'
 
-import type { BattleStatus } from '@/lib/battle-mock'
+import type { BattleStatus } from '@/lib/battle-types'
 
 import { Button } from '@/components/ui'
 

@@ -86,7 +86,7 @@ function Header() {
                 disabled={logout.isPending}
                 onClick={handleLogoutClick}
                 size="lg"
-                variant="ghost"
+                variant="destructive"
               >
                 {logout.isPending && <Spinner />}
                 <LogOut />

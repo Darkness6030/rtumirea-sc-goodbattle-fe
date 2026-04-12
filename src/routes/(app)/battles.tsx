@@ -10,7 +10,13 @@ import {
 
 import type { components } from '@/api/__generated__/schema'
 
-import { battlesQueryOptions, queryClient, useBattlesQuery } from '@/api'
+import {
+  battlesQueryOptions,
+  languagesQueryOptions,
+  queryClient,
+  useBattlesQuery,
+  useLanguagesQuery,
+} from '@/api'
 import {
   Badge,
   Button,
@@ -25,7 +31,6 @@ import {
   TabsTrigger,
   Typography,
 } from '@/components/ui'
-import { LANGUAGE_LABELS } from '@/lib/battle-mock'
 import { cn } from '@/lib/utils'
 
 type BattleHistoryItem = components['schemas']['BattleHistoryItemResponse']
@@ -36,12 +41,19 @@ export const Route = createFileRoute('/(app)/battles')({
     await Promise.all([
       queryClient.ensureQueryData(battlesQueryOptions('organizer')),
       queryClient.ensureQueryData(battlesQueryOptions('participant')),
+      queryClient.ensureQueryData(languagesQueryOptions()),
     ])
   },
   pendingComponent: PagePending,
 })
 
-function BattleCard({ battle }: { battle: BattleHistoryItem }) {
+function BattleCard({
+  battle,
+  languageNameByCode,
+}: {
+  battle: BattleHistoryItem
+  languageNameByCode: Record<string, string>
+}) {
   const navigate = useNavigate()
 
   const date = new Date(battle.date).toLocaleDateString('ru-RU', {
@@ -50,8 +62,10 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
     year: 'numeric',
   })
 
+  const isInProgress = battle.status !== 'finished'
+
   function handleClick() {
-    if (battle.status !== 'completed') {
+    if (isInProgress) {
       navigate({ params: { roomId: battle.id }, to: '/rooms/$roomId' })
     }
   }
@@ -60,7 +74,7 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
     <Card
       className={cn(
         'transition-colors hover:bg-muted/50',
-        battle.status !== 'completed' && 'cursor-pointer',
+        isInProgress && 'cursor-pointer',
       )}
       onClick={handleClick}
     >
@@ -89,7 +103,7 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
                 {battle.place} место
               </Badge>
             )}
-            {battle.status !== 'completed' && (
+            {isInProgress && (
               <ChevronRight className="size-4 text-muted-foreground" />
             )}
           </span>
@@ -110,7 +124,7 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
           <div className="flex gap-1">
             {battle.languages.map((lang) => (
               <Badge key={lang} variant="outline">
-                {LANGUAGE_LABELS[lang] ?? lang}
+                {languageNameByCode[lang] ?? lang}
               </Badge>
             ))}
           </div>
@@ -120,7 +134,13 @@ function BattleCard({ battle }: { battle: BattleHistoryItem }) {
   )
 }
 
-function BattleList({ battles }: { battles: BattleHistoryItem[] }) {
+function BattleList({
+  battles,
+  languageNameByCode,
+}: {
+  battles: BattleHistoryItem[]
+  languageNameByCode: Record<string, string>
+}) {
   if (battles.length === 0) {
     return (
       <div className="py-12 text-center">
@@ -132,15 +152,27 @@ function BattleList({ battles }: { battles: BattleHistoryItem[] }) {
   return (
     <div className="flex flex-col gap-3">
       {battles.map((battle) => (
-        <BattleCard battle={battle} key={battle.id} />
+        <BattleCard
+          battle={battle}
+          key={battle.id}
+          languageNameByCode={languageNameByCode}
+        />
       ))}
     </div>
   )
 }
 
 function BattlesPage() {
+  const languagesQuery = useLanguagesQuery()
   const participantBattlesQuery = useBattlesQuery('participant')
   const organizerBattlesQuery = useBattlesQuery('organizer')
+
+  const languageNameByCode = Object.fromEntries(
+    (languagesQuery.data ?? []).map((language) => [
+      language.code,
+      language.name,
+    ]),
+  )
 
   const participantBattles = participantBattlesQuery.data ?? []
   const organizerBattles = organizerBattlesQuery.data ?? []
@@ -175,10 +207,16 @@ function BattlesPage() {
         </TabsList>
 
         <TabsContent value="participant">
-          <BattleList battles={participantBattles} />
+          <BattleList
+            battles={participantBattles}
+            languageNameByCode={languageNameByCode}
+          />
         </TabsContent>
         <TabsContent value="organizer">
-          <BattleList battles={organizerBattles} />
+          <BattleList
+            battles={organizerBattles}
+            languageNameByCode={languageNameByCode}
+          />
         </TabsContent>
       </Tabs>
     </div>

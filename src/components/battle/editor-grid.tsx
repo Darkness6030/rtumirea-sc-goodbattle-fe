@@ -1,12 +1,13 @@
 import { useState } from 'react'
 
-import type { Participant } from '@/lib/battle-mock'
+import type { Participant } from '@/lib/battle-types'
 
 import {
   Button,
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
+  Typography,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +15,15 @@ import { useBattle } from './battle-context'
 import { ParticipantEditor } from './participant-editor'
 
 function EditorGrid() {
-  const { role } = useBattle()
+  const { participants, role } = useBattle()
+
+  if (participants.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Typography variant="muted">Ожидание участников...</Typography>
+      </div>
+    )
+  }
 
   if (role === 'organizer') {
     return <OrganizerGrid />
@@ -51,13 +60,13 @@ function EditorSlot({
             size="xs"
             variant={p.id === selectedId ? 'outline' : 'ghost'}
           >
-            {p.name}
+            {p.username}
           </Button>
         ))}
       </div>
       {participant && (
         <div className="min-h-0 flex-1">
-          <ParticipantEditor participant={participant} readOnly />
+          <ParticipantEditor participant={participant} />
         </div>
       )}
     </div>
@@ -66,6 +75,7 @@ function EditorSlot({
 
 function OrganizerGrid() {
   const { participants } = useBattle()
+
   const [slots, setSlots] = useState<(null | string)[]>([
     participants[0]?.id ?? null,
     participants[1]?.id ?? null,
@@ -88,7 +98,7 @@ function OrganizerGrid() {
   }
 
   const slotParticipants = slots.map((id) =>
-    id ? participants.find((p) => p.id === id) : undefined,
+    id ? participants.find((participant) => participant.id === id) : undefined,
   )
 
   return (
@@ -105,42 +115,50 @@ function OrganizerGrid() {
             participants={participants}
             selectedId={slots[0]}
           />
-          <EditorSlot
-            index={1}
-            onSelect={selectSlot}
-            participant={slotParticipants[1]}
-            participants={participants}
-            selectedId={slots[1]}
-          />
+          {participants.length > 1 && (
+            <EditorSlot
+              index={1}
+              onSelect={selectSlot}
+              participant={slotParticipants[1]}
+              participants={participants}
+              selectedId={slots[1]}
+            />
+          )}
         </div>
       </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel defaultSize="50%" minSize="35%">
-        <div className="flex h-full flex-col gap-3 pl-3">
-          <EditorSlot
-            index={2}
-            onSelect={selectSlot}
-            participant={slotParticipants[2]}
-            participants={participants}
-            selectedId={slots[2]}
-          />
-          <EditorSlot
-            index={3}
-            onSelect={selectSlot}
-            participant={slotParticipants[3]}
-            participants={participants}
-            selectedId={slots[3]}
-          />
-        </div>
-      </ResizablePanel>
+      {participants.length > 2 && (
+        <>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize="50%" minSize="35%">
+            <div className="flex h-full flex-col gap-3 pl-3">
+              <EditorSlot
+                index={2}
+                onSelect={selectSlot}
+                participant={slotParticipants[2]}
+                participants={participants}
+                selectedId={slots[2]}
+              />
+              {participants.length > 3 && (
+                <EditorSlot
+                  index={3}
+                  onSelect={selectSlot}
+                  participant={slotParticipants[3]}
+                  participants={participants}
+                  selectedId={slots[3]}
+                />
+              )}
+            </div>
+          </ResizablePanel>
+        </>
+      )}
     </ResizablePanelGroup>
   )
 }
 
 function ParticipantGrid() {
-  const { currentUserId, participants } = useBattle()
-  const currentUser = participants.find((p) => p.id === currentUserId)
-  const others = participants.filter((p) => p.id !== currentUserId)
+  const { currentParticipantId, participants } = useBattle()
+  const currentUser = participants.find((p) => p.id === currentParticipantId)
+  const others = participants.filter((p) => p.id !== currentParticipantId)
   const [topOtherId, setTopOtherId] = useState<null | string>(
     others[0]?.id ?? null,
   )
@@ -173,11 +191,7 @@ function ParticipantGrid() {
       {currentUser && (
         <ResizablePanel defaultSize="55%" minSize="35%">
           <div className="h-full pr-3">
-            <ParticipantEditor
-              isCurrentUser
-              participant={currentUser}
-              readOnly={false}
-            />
+            <ParticipantEditor isCurrentUser participant={currentUser} />
           </div>
         </ResizablePanel>
       )}

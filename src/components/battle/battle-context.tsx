@@ -6,14 +6,15 @@ import type {
   Participant,
   Role,
   TestResult,
-} from '@/lib/battle-mock'
+} from '@/lib/battle-types'
 
 type BattleContextValue = {
-  availableLanguages: string[]
+  currentParticipantId?: string
   currentTask: BattleTask
   currentTaskIndex: number
-  currentUserId: string
   isRunningCode: boolean
+  languageNameByCode: Record<string, string>
+  languages: string[]
   nextTaskTitle?: string
   onCodeChange: (participantId: string, code: string) => void
   onFinish: () => void
@@ -24,7 +25,9 @@ type BattleContextValue = {
   onStart: () => void
   onTimerEnd: () => void
   participants: Participant[]
+  remainingSeconds: number
   role: Role
+  roomCode: string
   status: BattleStatus
   testResults: null | TestResult[]
   timeLimit: number

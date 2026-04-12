@@ -1,6 +1,6 @@
 import { CheckCircle, Loader2, Play, XCircle } from 'lucide-react'
 
-import type { Participant } from '@/lib/battle-mock'
+import type { Participant } from '@/lib/battle-types'
 
 import {
   Badge,
@@ -14,7 +14,6 @@ import {
   SelectValue,
   Typography,
 } from '@/components/ui'
-import { LANGUAGE_LABELS } from '@/lib/battle-mock'
 import { cn } from '@/lib/utils'
 
 import { useBattle } from './battle-context'
@@ -23,18 +22,18 @@ import { CodeEditor } from './code-editor'
 function ParticipantEditor({
   isCurrentUser = false,
   participant,
-  readOnly,
 }: {
   isCurrentUser?: boolean
   participant: Participant
-  readOnly: boolean
 }) {
   const {
-    availableLanguages,
     isRunningCode,
+    languageNameByCode,
+    languages,
     onCodeChange,
     onLanguageChange,
     onRunCode,
+    status,
     testResults,
   } = useBattle()
 
@@ -47,7 +46,7 @@ function ParticipantEditor({
     >
       <div className="flex shrink-0 flex-row items-center gap-2 px-4 py-2">
         <Typography className="shrink-0 font-medium" variant="small">
-          {participant.name}
+          {participant.username}
         </Typography>
         {isCurrentUser && (
           <Typography
@@ -68,15 +67,15 @@ function ParticipantEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {availableLanguages.map((lang) => (
+                {languages.map((lang) => (
                   <SelectItem key={lang} value={lang}>
-                    {LANGUAGE_LABELS[lang] ?? lang}
+                    {languageNameByCode[lang] ?? lang}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Button
-              disabled={isRunningCode}
+              disabled={isRunningCode || status !== 'running'}
               onClick={onRunCode}
               size="sm"
               variant="outline"
@@ -91,7 +90,7 @@ function ParticipantEditor({
           </>
         ) : (
           <Badge variant="secondary">
-            {LANGUAGE_LABELS[participant.language] ?? participant.language}
+            {languageNameByCode[participant.language] ?? participant.language}
           </Badge>
         )}
       </div>
@@ -105,7 +104,7 @@ function ParticipantEditor({
               ? (code) => onCodeChange(participant.id, code)
               : undefined
           }
-          readOnly={readOnly}
+          readOnly={!isCurrentUser || status !== 'running'}
         />
       </CardContent>
 

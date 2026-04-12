@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react'
 
-import type { BattleStatus } from '@/lib/battle-mock'
+import type { BattleStatus } from '@/lib/battle-types'
 
 import { cn } from '@/lib/utils'
 
 function CountdownTimer({
   onTimerEnd,
+  remainingSeconds,
   status,
-  timeLimit,
 }: {
   onTimerEnd: () => void
+  remainingSeconds: number
   status: BattleStatus
-  timeLimit: number
 }) {
-  const [remaining, setRemaining] = useState(timeLimit * 60)
+  const [remaining, setRemaining] = useState(remainingSeconds)
 
   useEffect(() => {
-    setRemaining(timeLimit * 60)
-  }, [timeLimit])
+    setRemaining(remainingSeconds)
+  }, [remainingSeconds])
 
   useEffect(() => {
     if (status !== 'running') return

@@ -9,7 +9,12 @@ import {
   Trophy,
 } from 'lucide-react'
 
-import { profileQueryOptions, queryClient, useProfileQuery } from '@/api'
+import {
+  profileQueryOptions,
+  queryClient,
+  useLanguagesQuery,
+  useProfileQuery,
+} from '@/api'
 import {
   Button,
   Card,
@@ -36,6 +41,7 @@ function PagePending() {
 }
 
 function ProfilePage() {
+  const languagesQuery = useLanguagesQuery()
   const profileQuery = useProfileQuery()
   const profile = profileQuery.data
 
@@ -45,6 +51,13 @@ function ProfilePage() {
     month: 'long',
     year: 'numeric',
   })
+
+  const topLanguageName =
+    languagesQuery.data?.find(
+      (language) => language.code === profile.top_language,
+    )?.name ??
+    profile.top_language ??
+    '—'
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 py-8">
@@ -110,7 +123,7 @@ function ProfilePage() {
           <StatCard
             icon={<Code2 className="size-5" />}
             label="Топ язык"
-            value={profile.top_language ?? '—'}
+            value={topLanguageName}
           />
         </div>
       </div>

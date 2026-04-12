@@ -67,12 +67,12 @@ function RegisterPage() {
         <CardContent>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Имя</Label>
+              <Label htmlFor="username">Имя пользователя</Label>
               <Input
-                autoComplete="name"
-                id="name"
+                autoComplete="username"
+                id="username"
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Ваше имя"
+                placeholder="Ваш username"
                 required
                 type="text"
                 value={username}

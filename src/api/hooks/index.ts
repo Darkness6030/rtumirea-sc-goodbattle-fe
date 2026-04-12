@@ -7,7 +7,12 @@ export {
   useRegister,
 } from './auth'
 export { battlesQueryOptions, useBattlesQuery } from './battles'
-export { useLanguagesQuery } from './languages'
+export { languagesQueryOptions, useLanguagesQuery } from './languages'
 export { profileQueryOptions, useProfileQuery } from './profile'
-export { useCreateRoom, useJoinRoom } from './rooms'
+export {
+  roomQueryOptions,
+  useCreateRoom,
+  useJoinRoom,
+  useRoomQuery,
+} from './rooms'
 export { tasksQueryOptions, useTasksQuery } from './tasks'

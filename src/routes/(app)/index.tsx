@@ -97,6 +97,8 @@ function Index() {
                   disabled={joinRoom.isPending}
                   onChange={(e) => setRoomCode(e.target.value)}
                   placeholder="Код комнаты"
+                  required
+                  type="text"
                   value={roomCode}
                 />
 

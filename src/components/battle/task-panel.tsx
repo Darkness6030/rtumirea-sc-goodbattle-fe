@@ -1,5 +1,9 @@
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
+
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   Separator,
@@ -34,19 +38,36 @@ function TaskPanel() {
     onPause,
     onStart,
     onTimerEnd,
+    remainingSeconds,
     role,
+    roomCode,
     status,
-    timeLimit,
     totalTasks,
   } = useBattle()
+
+  async function handleCopyRoomCode() {
+    await navigator.clipboard.writeText(roomCode)
+    toast.success('Код комнаты скопирован')
+  }
 
   return (
     <div className="flex w-80 shrink-0 flex-col gap-4">
       <div className="flex shrink-0 flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Badge variant={role === 'organizer' ? 'default' : 'outline'}>
-            {role === 'organizer' ? 'Организатор' : 'Участник'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={role === 'organizer' ? 'default' : 'outline'}>
+              {role === 'organizer' ? 'Организатор' : 'Участник'}
+            </Badge>
+            <Button
+              className="ml-auto"
+              onClick={handleCopyRoomCode}
+              size="xs"
+              variant="outline"
+            >
+              <Copy className="size-3.5" />
+              {roomCode}
+            </Button>
+          </div>
           <div className="flex items-center gap-2">
             <Typography className="text-muted-foreground" variant="small">
               Задача {currentTaskIndex + 1} из {totalTasks}
@@ -60,8 +81,8 @@ function TaskPanel() {
 
         <CountdownTimer
           onTimerEnd={onTimerEnd}
+          remainingSeconds={remainingSeconds}
           status={status}
-          timeLimit={timeLimit}
         />
 
         {role === 'organizer' && (

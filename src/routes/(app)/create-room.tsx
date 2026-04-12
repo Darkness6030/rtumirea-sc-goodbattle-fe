@@ -134,7 +134,7 @@ function CreateRoomPage() {
               <Timer className="size-5 text-primary" />
               Лимит времени
             </CardTitle>
-            <CardDescription>Время на выполнение каждой задачи</CardDescription>
+            <CardDescription>Время на выполнение всех задач</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">

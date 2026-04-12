@@ -1,6 +1,6 @@
 import { Trophy } from 'lucide-react'
 
-import type { BattleResult } from '@/lib/battle-mock'
+import type { BattleResult } from '@/lib/battle-types'
 
 import {
   Badge,
@@ -46,7 +46,7 @@ function BattleResultsDialog({
               </span>
               <div className="flex flex-1 flex-col gap-1">
                 <Typography className="font-medium" variant="body">
-                  {r.name}
+                  {r.username}
                 </Typography>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
