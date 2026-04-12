@@ -33,10 +33,6 @@ function TaskPanel() {
     currentTask,
     currentTaskIndex,
     nextTaskTitle,
-    onFinish,
-    onNextTask,
-    onPause,
-    onStart,
     onTimerEnd,
     remainingSeconds,
     role,
@@ -87,15 +83,7 @@ function TaskPanel() {
 
         {role === 'organizer' && (
           <>
-            <OrganizerControls
-              currentTaskIndex={currentTaskIndex}
-              onFinish={onFinish}
-              onNextTask={onNextTask}
-              onPause={onPause}
-              onStart={onStart}
-              status={status}
-              totalTasks={totalTasks}
-            />
+            <OrganizerControls />
             {nextTaskTitle && (
               <Typography className="text-muted-foreground" variant="small">
                 Следующая: {nextTaskTitle}

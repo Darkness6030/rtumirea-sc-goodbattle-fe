@@ -1,26 +1,21 @@
 import { Flag, Pause, Play, SkipForward } from 'lucide-react'
 
-import type { BattleStatus } from '@/lib/battle-types'
-
 import { Button } from '@/components/ui'
 
-function OrganizerControls({
-  currentTaskIndex,
-  onFinish,
-  onNextTask,
-  onPause,
-  onStart,
-  status,
-  totalTasks,
-}: {
-  currentTaskIndex: number
-  onFinish: () => void
-  onNextTask: () => void
-  onPause: () => void
-  onStart: () => void
-  status: BattleStatus
-  totalTasks: number
-}) {
+import { useBattle } from './battle-context'
+
+function OrganizerControls() {
+  const {
+    currentTaskIndex,
+    onFinish,
+    onNextTask,
+    onPause,
+    onStart,
+    participants,
+    status,
+    totalTasks,
+  } = useBattle()
+
   const isLastTask = currentTaskIndex >= totalTasks - 1
 
   return (
@@ -34,7 +29,7 @@ function OrganizerControls({
         ) : (
           <Button
             className="flex-1"
-            disabled={status === 'finished'}
+            disabled={status === 'finished' || participants.length === 0}
             onClick={onStart}
           >
             <Play className="size-4" />
