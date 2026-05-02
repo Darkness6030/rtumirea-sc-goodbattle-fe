@@ -6,6 +6,10 @@ type RoomSocketClientMessage<T extends RoomSocketClientMessageType> = {
 }
 
 type RoomSocketClientMessageMap = {
+  ask_ai_hint: {
+    question: string
+    task_id: string
+  }
   code_update: {
     code: string
   }
@@ -31,6 +35,17 @@ type RoomSocketServerMessage<T extends RoomSocketServerMessageType> = {
 }
 
 type RoomSocketServerMessageMap = {
+  ai_hint_chunk: {
+    delta: string
+  }
+  ai_hint_result: {
+    hint: string
+    remaining: number
+    task_id: string
+  }
+  ai_hint_started: {
+    task_id: string
+  }
   battle_finished: {
     results: {
       id: string
@@ -241,6 +256,9 @@ function isRoomSocketServerMessageType(
   value: unknown,
 ): value is RoomSocketServerMessageType {
   return (
+    value === 'ai_hint_chunk' ||
+    value === 'ai_hint_result' ||
+    value === 'ai_hint_started' ||
     value === 'battle_finished' ||
     value === 'code_update' ||
     value === 'error' ||
@@ -280,6 +298,21 @@ function parseServerMessage(
     const payload = (parsed.data ?? {}) as unknown
 
     switch (parsed.type) {
+      case 'ai_hint_chunk':
+        return {
+          data: payload as RoomSocketServerMessageMap['ai_hint_chunk'],
+          type: 'ai_hint_chunk',
+        }
+      case 'ai_hint_result':
+        return {
+          data: payload as RoomSocketServerMessageMap['ai_hint_result'],
+          type: 'ai_hint_result',
+        }
+      case 'ai_hint_started':
+        return {
+          data: payload as RoomSocketServerMessageMap['ai_hint_started'],
+          type: 'ai_hint_started',
+        }
       case 'battle_finished':
         return {
           data: payload as RoomSocketServerMessageMap['battle_finished'],

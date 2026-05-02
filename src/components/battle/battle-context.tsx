@@ -9,21 +9,32 @@ import type {
 } from '@/lib/battle-types'
 
 type BattleContextValue = {
+  aiHintRemaining: null | number
+  aiMessages: {
+    id: string
+    role: 'assistant' | 'user'
+    text: string
+  }[]
   currentParticipantId?: string
   currentTask: BattleTask
   currentTaskIndex: number
   currentTaskSolvedParticipantIds: string[]
+  isAiChatOpen: boolean
+  isAiHintPending: boolean
   isCurrentTaskSolvedByCurrentUser: boolean
   isRunningCode: boolean
   languageNameByCode: Record<string, string>
   languages: string[]
   nextTaskTitle?: string
+  onAskAiHint: (question: string) => void
   onCodeChange: (participantId: string, code: string) => void
   onFinish: () => void
   onLanguageChange: (language: string) => void
   onNextTask: () => void
+  onOpenAiChat: () => void
   onPause: () => void
   onRunCode: () => void
+  onSelectParticipantEditor: () => void
   onStart: () => void
   onTimerEnd: () => void
   participants: Participant[]

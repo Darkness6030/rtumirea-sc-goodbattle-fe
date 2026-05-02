@@ -1,4 +1,4 @@
-import { Copy } from 'lucide-react'
+import { Bot, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -30,9 +30,12 @@ const STATUS_VARIANTS = {
 
 function TaskPanel() {
   const {
+    aiHintRemaining,
     currentTask,
     currentTaskIndex,
+    isAiHintPending,
     nextTaskTitle,
+    onOpenAiChat,
     onTimerEnd,
     participantsRating,
     remainingSeconds,
@@ -45,6 +48,10 @@ function TaskPanel() {
   async function handleCopyRoomCode() {
     await navigator.clipboard.writeText(roomCode)
     toast.success('Код комнаты скопирован')
+  }
+
+  function handleOpenAiChat() {
+    onOpenAiChat()
   }
 
   return (
@@ -97,7 +104,22 @@ function TaskPanel() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        <Typography variant="h2">{currentTask.title}</Typography>
+        <div className="flex items-start gap-2">
+          <Typography className="flex-1" variant="h2">
+            {currentTask.title}
+          </Typography>
+          {role === 'participant' && (
+            <Button
+              disabled={status !== 'running' || isAiHintPending}
+              onClick={handleOpenAiChat}
+              size="xs"
+              variant="outline"
+            >
+              <Bot className="size-3.5" />
+              {aiHintRemaining === 0 ? 'AI (0)' : 'AI'}
+            </Button>
+          )}
+        </div>
 
         <Typography className="whitespace-pre-line" variant="body">
           {currentTask.description}

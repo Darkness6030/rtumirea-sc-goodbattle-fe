@@ -27,6 +27,7 @@ function ParticipantEditor({
   participant: Participant
 }) {
   const {
+    currentParticipantId,
     currentTaskSolvedParticipantIds,
     isCurrentTaskSolvedByCurrentUser,
     isRunningCode,
@@ -127,7 +128,11 @@ function ParticipantEditor({
         <div
           className={cn(
             'h-full',
-            !isCurrentUser && isCurrentTaskSolvedByParticipant && 'blur-sm',
+            !isCurrentUser &&
+              isCurrentTaskSolvedByParticipant &&
+              // проверка на не-организатора
+              currentParticipantId &&
+              'blur-sm',
           )}
         >
           <CodeEditor

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
+import { AiChatPanel } from './ai-chat-panel'
 import { useBattle } from './battle-context'
 import { ParticipantEditor } from './participant-editor'
 
@@ -199,7 +200,12 @@ function OrganizerGrid() {
 }
 
 function ParticipantGrid() {
-  const { currentParticipantId, participants } = useBattle()
+  const {
+    currentParticipantId,
+    isAiChatOpen,
+    onSelectParticipantEditor,
+    participants,
+  } = useBattle()
   const currentUser = participants.find((p) => p.id === currentParticipantId)
   const others = participants.filter((p) => p.id !== currentParticipantId)
   const [topOtherId, setTopOtherId] = useState<null | string>(
@@ -254,6 +260,8 @@ function ParticipantGrid() {
   }, [others, topOtherId, bottomOtherId])
 
   function selectOther(index: number, id: string) {
+    onSelectParticipantEditor()
+
     if (index === 0) {
       if (id === bottomOtherId) {
         setBottomOtherId(topOtherId)
@@ -282,26 +290,33 @@ function ParticipantGrid() {
           </div>
         </ResizablePanel>
       )}
-      {others.length > 0 && (
+      {(others.length > 0 || isAiChatOpen) && (
         <>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize="45%" minSize="30%">
             <div className="flex h-full flex-col gap-3 pl-3">
-              <EditorSlot
-                index={0}
-                onSelect={selectOther}
-                participant={topOther}
-                participants={others}
-                selectedId={topOtherId}
-              />
-              {others.length > 1 && (
-                <EditorSlot
-                  index={1}
-                  onSelect={selectOther}
-                  participant={bottomOther}
-                  participants={others}
-                  selectedId={bottomOtherId}
-                />
+              {others.length > 0 ? (
+                <>
+                  <EditorSlot
+                    index={0}
+                    onSelect={selectOther}
+                    participant={isAiChatOpen ? undefined : topOther}
+                    participants={others}
+                    selectedId={topOtherId}
+                  />
+                  {isAiChatOpen && <AiChatPanel />}
+                  {others.length > 1 && (
+                    <EditorSlot
+                      index={1}
+                      onSelect={selectOther}
+                      participant={isAiChatOpen ? undefined : bottomOther}
+                      participants={others}
+                      selectedId={bottomOtherId}
+                    />
+                  )}
+                </>
+              ) : (
+                <AiChatPanel />
               )}
             </div>
           </ResizablePanel>

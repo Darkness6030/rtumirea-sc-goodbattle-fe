@@ -27,13 +27,70 @@ import { useAuthStore } from '@/stores/auth-store'
 
 let roomSocketDisconnectTimeout: null | number = null
 
+type AiHintInitialState = {
+  messages: AiMessage[]
+  remaining: number
+  used: boolean
+}
+
+type AiMessage = {
+  id: string
+  role: 'assistant' | 'user'
+  text: string
+}
+
 type RoomParticipantSolvedTasks = {
   solved_task_ids: string[]
   user_id: string
 }
 
 type RoomWithParticipantSolvedTasks = {
+  ai_hint?: {
+    answer?: null | string
+    question?: null | string
+    task_id?: null | string
+    used: boolean
+  }
   participants_solved_tasks?: RoomParticipantSolvedTasks[]
+}
+
+function getInitialAiHintState(
+  room: RoomWithParticipantSolvedTasks,
+  currentTaskId: string,
+): AiHintInitialState {
+  const aiHint = room.ai_hint
+
+  if (!aiHint || aiHint.task_id !== currentTaskId) {
+    return {
+      messages: [],
+      remaining: 1,
+      used: false,
+    }
+  }
+
+  const messages: AiMessage[] = []
+
+  if (aiHint.question && aiHint.question.trim().length > 0) {
+    messages.push({
+      id: 'initial-user-hint-question',
+      role: 'user',
+      text: aiHint.question,
+    })
+  }
+
+  if (aiHint.answer && aiHint.answer.trim().length > 0) {
+    messages.push({
+      id: 'initial-assistant-hint-answer',
+      role: 'assistant',
+      text: aiHint.answer,
+    })
+  }
+
+  return {
+    messages,
+    remaining: aiHint.used ? 0 : 1,
+    used: aiHint.used,
+  }
 }
 
 export const Route = createFileRoute('/(app)/rooms/$roomId')({
@@ -90,9 +147,29 @@ function BattleRoomPage() {
   const [currentTaskIndex, setCurrentTaskIndex] = useState(
     initialRoom.current_task_index,
   )
+  const initialTaskId =
+    initialRoom.tasks[initialRoom.current_task_index]?.id ??
+    initialRoom.tasks[0]?.id ??
+    ''
+  const initialAiHintState = useMemo(
+    () =>
+      getInitialAiHintState(
+        initialRoom as RoomWithParticipantSolvedTasks,
+        initialTaskId,
+      ),
+    [initialRoom, initialTaskId],
+  )
   const [testResults, setTestResults] = useState<null | TestResult[]>(null)
   const [battleResults, setBattleResults] = useState<BattleResult[]>([])
+  const [aiHintRemaining, setAiHintRemaining] = useState<null | number>(
+    initialAiHintState.remaining,
+  )
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>(
+    initialAiHintState.messages,
+  )
   const [isRunningCode, setIsRunningCode] = useState(false)
+  const [isAiChatOpen, setIsAiChatOpen] = useState(initialAiHintState.used)
+  const [isAiHintPending, setIsAiHintPending] = useState(false)
   const [
     participantSolvedTaskIdsByUserId,
     setParticipantSolvedTaskIdsByUserId,
@@ -185,6 +262,80 @@ function BattleRoomPage() {
   useEffect(() => {
     const unsubscribe = onRoomSocketMessage((message) => {
       switch (message.type) {
+        case 'ai_hint_chunk': {
+          setAiMessages((prev) => {
+            if (prev.length === 0) {
+              return [
+                {
+                  id: `ai-${Date.now()}`,
+                  role: 'assistant',
+                  text: message.data.delta,
+                },
+              ]
+            }
+
+            const lastMessage = prev[prev.length - 1]
+
+            if (lastMessage.role !== 'assistant') {
+              return [
+                ...prev,
+                {
+                  id: `ai-${Date.now()}`,
+                  role: 'assistant',
+                  text: message.data.delta,
+                },
+              ]
+            }
+
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...lastMessage,
+                text: `${lastMessage.text}${message.data.delta}`,
+              },
+            ]
+          })
+          break
+        }
+        case 'ai_hint_result': {
+          setAiHintRemaining(message.data.remaining)
+          setIsAiHintPending(false)
+          setAiMessages((prev) => {
+            const lastMessage = prev[prev.length - 1]
+
+            if (!lastMessage || lastMessage.role !== 'assistant') {
+              return [
+                ...prev,
+                {
+                  id: `ai-${Date.now()}`,
+                  role: 'assistant',
+                  text: message.data.hint,
+                },
+              ]
+            }
+
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...lastMessage,
+                text: message.data.hint,
+              },
+            ]
+          })
+          break
+        }
+        case 'ai_hint_started': {
+          setIsAiHintPending(true)
+          setAiMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              role: 'assistant',
+              text: '',
+            },
+          ])
+          break
+        }
         case 'battle_finished': {
           setBattleResults(
             message.data.results.map((result) => ({
@@ -214,6 +365,7 @@ function BattleRoomPage() {
           break
         }
         case 'error': {
+          setIsAiHintPending(false)
           setIsRunningCode(false)
           toast.error(message.data.detail)
           break
@@ -230,6 +382,9 @@ function BattleRoomPage() {
         }
         case 'next_task': {
           setCurrentTaskIndex(message.data.currentTaskIndex)
+          setAiHintRemaining(1)
+          setAiMessages([])
+          setIsAiHintPending(false)
           setIsRunningCode(false)
           setTestResults(null)
           setParticipants((prev) =>
@@ -491,7 +646,72 @@ function BattleRoomPage() {
       data: {},
       type: 'next_task',
     })
+    setAiHintRemaining(1)
+    setAiMessages([])
+    setIsAiHintPending(false)
     setTestResults(null)
+  }, [])
+
+  const onAskAiHint = useCallback(
+    (question: string) => {
+      const trimmedQuestion = question.trim()
+      const currentParticipant = participants.find(
+        (participant) => participant.id === currentParticipantId,
+      )
+
+      if (
+        !trimmedQuestion ||
+        !currentParticipant ||
+        aiHintRemaining === 0 ||
+        isAiHintPending
+      ) {
+        return
+      }
+
+      if (currentParticipant.code.trim().length === 0) {
+        toast.error('Сначала напишите решение в редакторе')
+
+        return
+      }
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          text: trimmedQuestion,
+        },
+      ])
+      setIsAiHintPending(true)
+
+      const isSent = sendRoomSocketMessage({
+        data: {
+          question: trimmedQuestion.slice(0, 100),
+          task_id: currentTask.id,
+        },
+        type: 'ask_ai_hint',
+      })
+
+      if (!isSent) {
+        setIsAiHintPending(false)
+        toast.error('Не удалось отправить запрос к AI')
+      }
+    },
+    [
+      aiHintRemaining,
+      currentParticipantId,
+      currentTask.id,
+      isAiHintPending,
+      participants,
+    ],
+  )
+
+  const onOpenAiChat = useCallback(() => {
+    setIsAiChatOpen((prev) => !prev)
+  }, [])
+
+  const onSelectParticipantEditor = useCallback(() => {
+    setIsAiChatOpen(false)
   }, [])
 
   if (socketError) {
@@ -500,21 +720,28 @@ function BattleRoomPage() {
 
   const contextValue = useMemo(
     () => ({
+      aiHintRemaining,
+      aiMessages,
       currentParticipantId,
       currentTask,
       currentTaskIndex,
       currentTaskSolvedParticipantIds,
+      isAiChatOpen,
+      isAiHintPending,
       isCurrentTaskSolvedByCurrentUser,
       isRunningCode,
       languageNameByCode,
       languages: initialRoom.languages,
       nextTaskTitle: nextTask?.title,
+      onAskAiHint,
       onCodeChange,
       onFinish,
       onLanguageChange,
       onNextTask,
+      onOpenAiChat,
       onPause,
       onRunCode,
+      onSelectParticipantEditor,
       onStart,
       onTimerEnd,
       participants,
@@ -528,10 +755,14 @@ function BattleRoomPage() {
       totalTasks: initialRoom.total_tasks,
     }),
     [
+      aiHintRemaining,
+      aiMessages,
       currentParticipantId,
       currentTask,
       currentTaskIndex,
       currentTaskSolvedParticipantIds,
+      isAiChatOpen,
+      isAiHintPending,
       isCurrentTaskSolvedByCurrentUser,
       initialRoom.code,
       initialRoom.languages,
@@ -545,8 +776,11 @@ function BattleRoomPage() {
       onFinish,
       onLanguageChange,
       onNextTask,
+      onAskAiHint,
       onPause,
+      onOpenAiChat,
       onRunCode,
+      onSelectParticipantEditor,
       onStart,
       onTimerEnd,
       participants,
