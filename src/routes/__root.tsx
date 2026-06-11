@@ -1,6 +1,5 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { ViewTransition } from 'react'
 
 import { fetchAuthUser } from '@/api'
 import { Header } from '@/components/header'
@@ -39,9 +38,7 @@ function RootLayout() {
       <div className="flex h-screen w-screen flex-col gap-4 px-4 max-md:hidden">
         <Header />
 
-        <ViewTransition>
-          <Outlet />
-        </ViewTransition>
+        <Outlet />
 
         <TanStackRouterDevtools />
       </div>

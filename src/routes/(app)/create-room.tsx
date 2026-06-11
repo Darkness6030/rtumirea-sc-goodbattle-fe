@@ -2,9 +2,11 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   ArrowRight,
+  Bot,
   Code2,
   ListChecks,
   Plus,
+  Sparkles,
   Timer,
   Trash2,
 } from 'lucide-react'
@@ -15,6 +17,7 @@ import {
   tasksQueryOptions,
   useCreateRoom,
   useCreateTask,
+  useGenerateTaskDraft,
   useLanguagesQuery,
   useTasksQuery,
 } from '@/api'
@@ -34,6 +37,11 @@ import {
   DialogTitle,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Slider,
   Spinner,
   Textarea,
@@ -59,6 +67,37 @@ type DraftTaskTestCase = {
   isHidden: boolean
 }
 
+type GeneratedTaskDraft = {
+  description: string
+  examples: Array<{
+    input: string
+    output: string
+  }>
+  memory_limit_mb: number
+  test_cases: Array<{
+    expected_output: string
+    input: string
+    is_hidden: boolean
+  }>
+  time_limit_ms: number
+  title: string
+}
+
+const GENERATION_TOPICS = [
+  'Массивы и строки',
+  'Сортировка',
+  'Два указателя',
+  'Хеш-таблицы',
+  'Жадные алгоритмы',
+  'Динамическое программирование',
+  'Графы',
+  'Деревья',
+]
+
+const GENERATION_DIFFICULTIES = ['Легко', 'Средне', 'Сложно']
+
+const MAX_GENERATION_PROMPT_LENGTH = 500
+
 function createDraftTaskExample(): DraftTaskExample {
   return {
     id: crypto.randomUUID(),
@@ -80,8 +119,10 @@ function CreateRoomPage() {
   const navigate = useNavigate()
   const createTask = useCreateTask()
   const createRoom = useCreateRoom()
+  const generateTaskDraft = useGenerateTaskDraft()
 
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
+  const [generateTaskDialogOpen, setGenerateTaskDialogOpen] = useState(false)
   const [customTaskDescription, setCustomTaskDescription] = useState('')
   const [customTaskExamples, setCustomTaskExamples] = useState<
     DraftTaskExample[]
@@ -92,6 +133,12 @@ function CreateRoomPage() {
   >([createDraftTaskTestCase()])
   const [customTaskTimeLimitMs, setCustomTaskTimeLimitMs] = useState('1000')
   const [customTaskTitle, setCustomTaskTitle] = useState('')
+  const [generationDifficulty, setGenerationDifficulty] = useState(
+    GENERATION_DIFFICULTIES[1],
+  )
+  const [generationPrompt, setGenerationPrompt] = useState('')
+  const [generationTemperature, setGenerationTemperature] = useState(0.4)
+  const [generationTopic, setGenerationTopic] = useState(GENERATION_TOPICS[0])
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
   const [timeLimit, setTimeLimit] = useState(10)
   const [selectedTasks, setSelectedTasks] = useState<string[]>([])
@@ -147,6 +194,12 @@ function CreateRoomPage() {
     !hasIncompleteTaskTestCases &&
     !createTask.isPending
 
+  const isGenerateTaskValid =
+    generationPrompt.trim().length > 0 &&
+    generationTopic.trim().length > 0 &&
+    generationDifficulty.trim().length > 0 &&
+    !generateTaskDraft.isPending
+
   const isValid =
     selectedLanguages.length > 0 &&
     selectedTasks.length > 0 &&
@@ -173,9 +226,18 @@ function CreateRoomPage() {
     setCustomTaskTitle('')
   }
 
+  function resetGeneratedTaskForm() {
+    setGenerationDifficulty(GENERATION_DIFFICULTIES[1])
+    setGenerationPrompt('')
+    setGenerationTemperature(0.4)
+    setGenerationTopic(GENERATION_TOPICS[0])
+  }
+
   function handleCreateTaskDialogOpenChange(open: boolean) {
-    if (!open && !createTask.isPending) {
+    if (!open && !createTask.isPending && !generateTaskDraft.isPending) {
       resetCustomTaskForm()
+      resetGeneratedTaskForm()
+      setGenerateTaskDialogOpen(false)
     }
 
     setCreateTaskDialogOpen(open)
@@ -258,6 +320,24 @@ function CreateRoomPage() {
     setCustomTaskTitle(e.target.value)
   }
 
+  function handleGeneratedTaskPromptChange(
+    e: ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    setGenerationPrompt(e.target.value.slice(0, MAX_GENERATION_PROMPT_LENGTH))
+  }
+
+  function handleGenerationTopicChange(value: string) {
+    setGenerationTopic(value)
+  }
+
+  function handleGenerationDifficultyChange(value: string) {
+    setGenerationDifficulty(value)
+  }
+
+  function handleGenerationTemperatureChange([value]: number[]) {
+    setGenerationTemperature(value)
+  }
+
   function handleOpenCreateTaskDialog() {
     handleCreateTaskDialogOpenChange(true)
   }
@@ -272,6 +352,44 @@ function CreateRoomPage() {
 
   function handleAddCustomTaskTestCase() {
     setCustomTaskTestCases((prev) => [...prev, createDraftTaskTestCase()])
+  }
+
+  function handleOpenGenerateTaskDialog() {
+    setGenerateTaskDialogOpen(true)
+  }
+
+  function handleCloseGenerateTaskDialog() {
+    handleGenerateTaskDialogOpenChange(false)
+  }
+
+  function handleGenerateTaskDialogOpenChange(open: boolean) {
+    if (!open && !generateTaskDraft.isPending) {
+      resetGeneratedTaskForm()
+    }
+
+    setGenerateTaskDialogOpen(open)
+  }
+
+  function applyGeneratedTaskDraft(task: GeneratedTaskDraft) {
+    setCustomTaskTitle(task.title)
+    setCustomTaskDescription(task.description)
+    setCustomTaskTimeLimitMs(String(task.time_limit_ms))
+    setCustomTaskMemoryLimitMb(String(task.memory_limit_mb))
+    setCustomTaskExamples(
+      task.examples.map((example) => ({
+        id: crypto.randomUUID(),
+        input: example.input,
+        output: example.output,
+      })),
+    )
+    setCustomTaskTestCases(
+      task.test_cases.map((testCase) => ({
+        expectedOutput: testCase.expected_output,
+        id: crypto.randomUUID(),
+        input: testCase.input,
+        isHidden: testCase.is_hidden,
+      })),
+    )
   }
 
   function handleRemoveCustomTaskExample(exampleId: string) {
@@ -309,6 +427,28 @@ function CreateRoomPage() {
       )
       setCreateTaskDialogOpen(false)
       resetCustomTaskForm()
+    } catch {
+      return
+    }
+  }
+
+  async function handleGenerateTaskSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!isGenerateTaskValid) return
+
+    try {
+      const draft = await generateTaskDraft.mutateAsync({
+        body: {
+          difficulty: generationDifficulty,
+          prompt: generationPrompt.trim(),
+          temperature: generationTemperature,
+          topic: generationTopic,
+        },
+      })
+
+      applyGeneratedTaskDraft(draft as GeneratedTaskDraft)
+      handleGenerateTaskDialogOpenChange(false)
     } catch {
       return
     }
@@ -477,7 +617,8 @@ function CreateRoomPage() {
           <DialogHeader>
             <DialogTitle>Создание задачи</DialogTitle>
             <DialogDescription>
-              Новая задача сразу появится в списке и будет выбрана автоматически
+              Новая задача сразу появится в списке и будет выбрана
+              автоматически
             </DialogDescription>
           </DialogHeader>
 
@@ -613,6 +754,14 @@ function CreateRoomPage() {
 
             <DialogFooter className="shrink-0 border-t pt-4">
               <Button
+                onClick={handleOpenGenerateTaskDialog}
+                type="button"
+                variant="outline"
+              >
+                <Sparkles className="size-4" />
+                Сгенерировать с AI
+              </Button>
+              <Button
                 onClick={handleCancelCreateTask}
                 type="button"
                 variant="ghost"
@@ -622,6 +771,133 @@ function CreateRoomPage() {
               <Button disabled={!isCreateTaskValid} type="submit">
                 {createTask.isPending && <Spinner />}
                 Создать задачу
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={handleGenerateTaskDialogOpenChange}
+        open={generateTaskDialogOpen}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="size-5 text-primary" />
+              Генерация задачи с AI
+            </DialogTitle>
+            <DialogDescription>
+              Запросите черновик задачи, а затем при необходимости поправьте
+              поля вручную
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            className="flex flex-col gap-5"
+            onSubmit={handleGenerateTaskSubmit}
+          >
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="task-generation-prompt">Идея задачи</Label>
+              <Textarea
+                className="min-h-32"
+                id="task-generation-prompt"
+                onChange={handleGeneratedTaskPromptChange}
+                placeholder="Например: задача про поиск минимального пути в сетке с необычной легендой про космическую станцию"
+                rows={6}
+                value={generationPrompt}
+              />
+              <div className="flex justify-between gap-3">
+                <Typography variant="muted">
+                  Укажите сюжет, ограничения или желаемую механику
+                </Typography>
+                <Typography className="shrink-0" variant="muted">
+                  {generationPrompt.length}/{MAX_GENERATION_PROMPT_LENGTH}
+                </Typography>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-generation-topic">Тематика</Label>
+                <Select
+                  onValueChange={handleGenerationTopicChange}
+                  value={generationTopic}
+                >
+                  <SelectTrigger
+                    className="h-10 w-full"
+                    id="task-generation-topic"
+                  >
+                    <SelectValue placeholder="Выберите тематику" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENERATION_TOPICS.map((topic) => (
+                      <SelectItem key={topic} value={topic}>
+                        {topic}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-generation-difficulty">Сложность</Label>
+                <Select
+                  onValueChange={handleGenerationDifficultyChange}
+                  value={generationDifficulty}
+                >
+                  <SelectTrigger
+                    className="h-10 w-full"
+                    id="task-generation-difficulty"
+                  >
+                    <SelectValue placeholder="Выберите сложность" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENERATION_DIFFICULTIES.map((difficulty) => (
+                      <SelectItem key={difficulty} value={difficulty}>
+                        {difficulty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 rounded-xl border bg-muted/30 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Typography className="font-medium" variant="small">
+                    Temperature
+                  </Typography>
+                  <Typography variant="muted">
+                    Ниже значение - строже структура, выше - больше
+                    вариативности
+                  </Typography>
+                </div>
+                <Typography className="font-medium" variant="small">
+                  {generationTemperature.toFixed(1)}
+                </Typography>
+              </div>
+              <Slider
+                max={1}
+                min={0}
+                onValueChange={handleGenerationTemperatureChange}
+                step={0.1}
+                value={[generationTemperature]}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                onClick={handleCloseGenerateTaskDialog}
+                type="button"
+                variant="ghost"
+              >
+                Отмена
+              </Button>
+              <Button disabled={!isGenerateTaskValid} type="submit">
+                {generateTaskDraft.isPending && <Spinner />}
+                Сгенерировать
               </Button>
             </DialogFooter>
           </form>

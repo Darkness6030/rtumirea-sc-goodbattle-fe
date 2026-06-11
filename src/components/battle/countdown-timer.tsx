@@ -13,11 +13,26 @@ function CountdownTimer({
   remainingSeconds: number
   status: BattleStatus
 }) {
-  const [remaining, setRemaining] = useState(remainingSeconds)
+  return (
+    <CountdownTimerValue
+      key={remainingSeconds}
+      onTimerEnd={onTimerEnd}
+      remainingSeconds={remainingSeconds}
+      status={status}
+    />
+  )
+}
 
-  useEffect(() => {
-    setRemaining(remainingSeconds)
-  }, [remainingSeconds])
+function CountdownTimerValue({
+  onTimerEnd,
+  remainingSeconds,
+  status,
+}: {
+  onTimerEnd: () => void
+  remainingSeconds: number
+  status: BattleStatus
+}) {
+  const [remaining, setRemaining] = useState(remainingSeconds)
 
   useEffect(() => {
     if (status !== 'running') return

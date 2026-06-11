@@ -17,6 +17,10 @@ export function useCreateTask() {
   })
 }
 
+export function useGenerateTaskDraft() {
+  return $api.useMutation('post', '/api/tasks/generate')
+}
+
 export function useTasksQuery() {
   return $api.useQuery('get', '/api/tasks', undefined, {
     retry: false,

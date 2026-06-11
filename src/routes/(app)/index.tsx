@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Crown, ExternalLink, LogIn, Users } from 'lucide-react'
-import { useState, ViewTransition } from 'react'
+import { useState } from 'react'
 
 import { useJoinRoom } from '@/api'
 import {
@@ -92,27 +92,25 @@ function Index() {
           </CardHeader>
           <CardContent>
             <form className="flex flex-col gap-4" onSubmit={handleJoinSubmit}>
-              <ViewTransition>
-                <Input
-                  disabled={joinRoom.isPending}
-                  onChange={(e) => setRoomCode(e.target.value)}
-                  placeholder="Код комнаты"
-                  required
-                  type="text"
-                  value={roomCode}
-                />
+              <Input
+                disabled={joinRoom.isPending}
+                onChange={(e) => setRoomCode(e.target.value)}
+                placeholder="Код комнаты"
+                required
+                type="text"
+                value={roomCode}
+              />
 
-                <Button
-                  className="w-full"
-                  disabled={joinRoom.isPending}
-                  size="lg"
-                  type="submit"
-                >
-                  {joinRoom.isPending && <Spinner />}
-                  Войти
-                  <LogIn />
-                </Button>
-              </ViewTransition>
+              <Button
+                className="w-full"
+                disabled={joinRoom.isPending}
+                size="lg"
+                type="submit"
+              >
+                {joinRoom.isPending && <Spinner />}
+                Войти
+                <LogIn />
+              </Button>
             </form>
           </CardContent>
         </Card>

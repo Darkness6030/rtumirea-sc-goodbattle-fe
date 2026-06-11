@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { LogOut, Swords, User } from 'lucide-react'
-import { ViewTransition } from 'react'
 
 import { useLogout } from '@/api'
 import Logo from '@/icons/logo.svg'
@@ -59,7 +58,7 @@ function Header() {
       </Link>
 
       {isAuthResolved && user && (
-        <ViewTransition>
+        <>
           {compact ? (
             <div className="flex items-center gap-1" key="compact">
               <Button asChild size="sm" variant="ghost">
@@ -95,7 +94,7 @@ function Header() {
               </Button>
             </div>
           )}
-        </ViewTransition>
+        </>
       )}
     </header>
   )
